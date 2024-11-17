@@ -10,15 +10,14 @@
 LidarModel::LidarModel(rclcpp::Node::SharedPtr node)
     : node_(node), cloud_(new pcl::PointCloud<pcl::PointXYZI>()) {}
 
-LidarModel::LidarModel() {
-  // Реализация конструктора (может быть пустым, если не требуется)
-}
+LidarModel::LidarModel() {}
 
 void LidarModel::configure(double lidar_height, int num_lasers,
                            double alpha_begin, double alpha_end,
                            double laser_range,
                            const std::vector<double>& planes_tilt_angles,
-                           const std::vector<double>& planes_heights) {
+                           const std::vector<double>& planes_heights,
+                           const std::vector<Sphere>& spheres) {
   lidar_height_ = lidar_height;
   num_lasers_ = num_lasers;
   alpha_begin_ = alpha_begin;
@@ -26,6 +25,7 @@ void LidarModel::configure(double lidar_height, int num_lasers,
   laser_range_ = laser_range;
   planes_tilt_angles_ = planes_tilt_angles;
   planes_heights_ = planes_heights;
+  spheres_ = spheres;
 
   generateRays();
   generatePlanes();
@@ -113,6 +113,18 @@ void LidarModel::findIntersections() {
       }
     }
 
+    // проверка пересечений с каждой сферой
+    for (const auto& sphere : spheres_) {
+      Eigen::Vector3d sphere_intersection;
+      if (intersectsSphere(ray, sphere, sphere_intersection)) {
+        double distance = sphere_intersection.norm();
+        if (distance < min_distance) {
+          min_distance = distance;
+          nearest_intersection = sphere_intersection;
+        }
+      }
+    }
+
     // сохраняем ближайшую точку в облако точек
     if (min_distance < laser_range_) {
       pcl::PointXYZI point;
@@ -138,6 +150,10 @@ const std::vector<LidarModel::Plane>& LidarModel::getPlanes() const {
   return planes_;
 }
 
+const std::vector<LidarModel::Sphere>& LidarModel::getSpheres() const {
+  return spheres_;
+}
+
 // функция для проверки, находится ли точка внутри допустимых границ
 bool LidarModel::isWithinBounds(const Eigen::Vector3d& point,
                                 size_t current_plane_index) {
@@ -153,4 +169,24 @@ bool LidarModel::isWithinBounds(const Eigen::Vector3d& point,
   }
 
   return true;
+}
+
+// проверка пересечения с одной сферой
+bool LidarModel::intersectsSphere(const Eigen::Vector3d& ray,
+                                  const Sphere& sphere,
+                                  Eigen::Vector3d& intersection) const {
+  Eigen::Vector3d oc = -sphere.center;  // от центра сферы до начала луча
+  double a = ray.dot(ray);
+  double b = 2.0 * oc.dot(ray);
+  double c = oc.dot(oc) - sphere.radius * sphere.radius;
+
+  double discriminant = b * b - 4 * a * c;
+  if (discriminant < 0) return false;  // нет пересечения
+
+  double t = (-b - sqrt(discriminant)) / (2.0 * a);
+  if (t > 0 && t <= laser_range_) {
+    intersection = t * ray;
+    return true;
+  }
+  return false;
 }

@@ -52,3 +52,33 @@ void LidarView::publishPlaneMarkers(
     marker_pub_->publish(plane_marker);
   }
 }
+
+void LidarView::publishSphereMarkers(
+    const std::vector<LidarModel::Sphere>& spheres,
+    const std::string& lidar_frame) {
+  for (size_t i = 0; i < spheres.size(); ++i) {
+    visualization_msgs::msg::Marker sphere_marker;
+    sphere_marker.header.frame_id = lidar_frame;
+    sphere_marker.header.stamp = node_->now();
+    sphere_marker.ns = "lidar_sphere";
+    sphere_marker.id = static_cast<int>(i);
+    sphere_marker.type = visualization_msgs::msg::Marker::SPHERE;
+    sphere_marker.action = visualization_msgs::msg::Marker::ADD;
+
+    sphere_marker.pose.position.x = spheres[i].center.x();
+    sphere_marker.pose.position.y = spheres[i].center.y();
+    sphere_marker.pose.position.z = spheres[i].center.z();
+    sphere_marker.pose.orientation.w = 1.0;
+
+    sphere_marker.scale.x = spheres[i].radius * 2.0;
+    sphere_marker.scale.y = spheres[i].radius * 2.0;
+    sphere_marker.scale.z = spheres[i].radius * 2.0;
+
+    sphere_marker.color.r = 1.0f;
+    sphere_marker.color.g = 0.0f;
+    sphere_marker.color.b = 0.0f;
+    sphere_marker.color.a = 0.8f;
+
+    marker_pub_->publish(sphere_marker);
+  }
+}

@@ -17,6 +17,8 @@ class LidarView {
   void publishPointCloud(const pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud);
   void publishPlaneMarkers(const std::vector<LidarModel::Plane>& planes,
                            const std::string& lidar_frame);
+  void publishSphereMarkers(const std::vector<LidarModel::Sphere>& spheres,
+                            const std::string& lidar_frame);
 
  private:
   rclcpp::Node::SharedPtr node_;

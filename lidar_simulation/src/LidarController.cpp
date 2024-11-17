@@ -19,9 +19,14 @@ LidarController::LidarController(rclcpp::Node::SharedPtr node)
   auto planes_heights = node_->declare_parameter<std::vector<double>>(
       "planes_heights", {1.0, 1.5});
 
-  // конфигурация модели
+  // параметры сфер
+  std::vector<LidarModel::Sphere> spheres = {{{3.0, 0.0, 1.0}, 1.0},
+                                             {{-2.0, 2.0, 0.5}, 0.8},
+                                             {{-3.0, -1.0, -1.0}, 0.2},
+                                             {{3.0, -1.0, -1.0}, 0.5}};
+
   model_.configure(lidar_height, num_lasers, alpha_begin, alpha_end,
-                   laser_range, planes_tilt_angles, planes_heights);
+                   laser_range, planes_tilt_angles, planes_heights, spheres);
   model_.findIntersections();
 
   // таймер для публикации данных
@@ -34,4 +39,5 @@ void LidarController::publishData() {
   view_.publishPointCloud(model_.getPointCloud());  // публикация облака точек
   view_.publishPlaneMarkers(model_.getPlanes(),
                             "lidar_frame");  // публикация маркеров
+  view_.publishSphereMarkers(model_.getSpheres(), "lidar_frame");
 }
