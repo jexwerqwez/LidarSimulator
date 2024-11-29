@@ -1,8 +1,11 @@
 #include "../include/LidarController.h"
 
+#include "../include/Objects/Plane.h"
+#include "../include/Objects/Sphere.h"
+
 LidarController::LidarController(rclcpp::Node::SharedPtr node)
-    : node_(node), view_(node) {
-  // инициализация параметров для лидара и плоскостей
+    : lidar_(node), visualization_(node), node_(node) {
+  // инициализация параметров для лидара
   double lidar_height = node_->declare_parameter(
       "lidar_height", 1.0);  // высота лидара над землёй
   int num_lasers = node_->declare_parameter(
@@ -13,21 +16,41 @@ LidarController::LidarController(rclcpp::Node::SharedPtr node)
       node_->declare_parameter("alpha_end", 45.0);  // конечный угол
   double laser_range =
       node_->declare_parameter("laser_range", 20.0);  // дальность лазера
-  // параметры для плоскостей
-  auto planes_tilt_angles = node_->declare_parameter<std::vector<double>>(
-      "planes_tilt_angles", {20.0, -20.0});
-  auto planes_heights = node_->declare_parameter<std::vector<double>>(
-      "planes_heights", {1.0, 1.5});
+  double horizontal_step_deg = node_->declare_parameter(
+      "horizontal_step_deg", 1.0);  // шаг лидара по горизонтали
+  double horizontal_step = horizontal_step_deg * M_PI / 180.0;
 
-  // параметры сфер
-  std::vector<LidarModel::Sphere> spheres = {{{3.0, 0.0, 1.0}, 1.0},
-                                             {{-2.0, 2.0, 0.5}, 0.8},
-                                             {{-3.0, -1.0, -1.0}, 0.2},
-                                             {{3.0, -1.0, -1.0}, 0.5}};
+  lidar_.configure(lidar_height, num_lasers, alpha_begin, alpha_end,
+                   laser_range, horizontal_step);
 
-  model_.configure(lidar_height, num_lasers, alpha_begin, alpha_end,
-                   laser_range, planes_tilt_angles, planes_heights, spheres);
-  model_.findIntersections();
+  // инициализация плоскостей
+  Position3D plane1_pos(0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+  auto plane1 = std::make_shared<Plane>(plane1_pos, 10.0, 10.0);
+  objects_.push_back(plane1);
+  lidar_.addObject(plane1);
+
+  Position3D plane2_pos(1.0, 0.0, 0.0, 10.0 * M_PI / 180.0, 0.0, 0.0);
+  auto plane2 = std::make_shared<Plane>(plane2_pos, 10.0, 10.0);
+  objects_.push_back(plane2);
+  lidar_.addObject(plane2);
+
+  // инициализация сфер
+  auto sphere1 =
+      std::make_shared<Sphere>(Position3D(3.0, 0.0, 1.0, 0.0, 0.0, 0.0), 1.0);
+  auto sphere2 =
+      std::make_shared<Sphere>(Position3D(-2.0, 2.0, 0.5, 0.0, 0.0, 0.0), 0.8);
+  auto sphere3 = std::make_shared<Sphere>(
+      Position3D(-3.0, -1.0, -1.0, 0.0, 0.0, 0.0), 0.2);
+  auto sphere4 =
+      std::make_shared<Sphere>(Position3D(3.0, -1.0, -1.0, 0.0, 0.0, 0.0), 0.5);
+  objects_.push_back(sphere1);
+  objects_.push_back(sphere2);
+  objects_.push_back(sphere3);
+  objects_.push_back(sphere4);
+  lidar_.addObject(sphere1);
+  lidar_.addObject(sphere2);
+  lidar_.addObject(sphere3);
+  lidar_.addObject(sphere4);
 
   // таймер для публикации данных
   timer_ =
@@ -35,9 +58,10 @@ LidarController::LidarController(rclcpp::Node::SharedPtr node)
                                std::bind(&LidarController::publishData, this));
 }
 
+void LidarController::run() { rclcpp::spin(node_); }
+
 void LidarController::publishData() {
-  view_.publishPointCloud(model_.getPointCloud());  // публикация облака точек
-  view_.publishPlaneMarkers(model_.getPlanes(),
-                            "lidar_frame");  // публикация маркеров
-  view_.publishSphereMarkers(model_.getSpheres(), "lidar_frame");
+  auto cloud = lidar_.scan();
+  visualization_.publishPointCloud(cloud);  // публикация облака точек
+  visualization_.publishMarkers(objects_);  // публикация маркеров
 }

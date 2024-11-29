@@ -16,9 +16,11 @@ include_directories(
 )
 
 add_executable(${PROJECT_NAME}_node
+  src/Objects/Plane.cpp
+  src/Objects/Sphere.cpp
+  src/Lidar.cpp
+  src/Visualization.cpp
   src/LidarController.cpp
-  src/LidarModel.cpp
-  src/LidarView.cpp
   src/Main.cpp
 )
 

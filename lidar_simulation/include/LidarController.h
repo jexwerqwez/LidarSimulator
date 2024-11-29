@@ -3,8 +3,9 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include "LidarModel.h"
-#include "LidarView.h"
+#include "Lidar.h"
+#include "Objects/Object.h"
+#include "Visualization.h"
 
 class LidarController {
  public:
@@ -13,13 +14,13 @@ class LidarController {
   void run();
 
  private:
-  LidarModel model_;
-  LidarView view_;
+  void publishData();
+
+  Lidar lidar_;
+  Visualization visualization_;
   rclcpp::Node::SharedPtr node_;
   rclcpp::TimerBase::SharedPtr timer_;
-
-  // функция для публикации облака точек и маркеров
-  void publishData();
+  std::vector<std::shared_ptr<Object>> objects_;
 };
 
 #endif  // LIDAR_CONTROLLER_H
