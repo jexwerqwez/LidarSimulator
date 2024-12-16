@@ -12,6 +12,7 @@ class LidarController {
   LidarController(rclcpp::Node::SharedPtr node);
 
   void run();
+  void testRayPlaneIntersection();
 
  private:
   void publishData();

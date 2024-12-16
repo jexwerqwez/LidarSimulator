@@ -23,6 +23,8 @@ class Lidar {
 
   pcl::PointCloud<pcl::PointXYZI>::Ptr scan();
 
+  std::vector<Eigen::Vector3d> getRays() const; 
+
  private:
   void generateRays();
 

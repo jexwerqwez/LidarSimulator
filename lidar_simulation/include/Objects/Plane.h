@@ -12,6 +12,8 @@ class Plane : public Object {
                   Point3D &intersection_point) const override;
 
   Position3D getPosition() const override;
+  double getWidth() const;
+  double getHeight() const;
   void setPosition(const Position3D &position) override;
 
   visualization_msgs::msg::Marker getMarker(int id) const override;

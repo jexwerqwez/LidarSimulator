@@ -9,6 +9,7 @@
 #include <visualization_msgs/msg/marker.hpp>
 
 #include "Objects/Object.h"
+#include "Objects/Plane.h"
 
 class Visualization {
  public:
@@ -16,8 +17,11 @@ class Visualization {
 
   void publishPointCloud(const pcl::PointCloud<pcl::PointXYZI>::Ptr &cloud);
   void publishMarkers(const std::vector<std::shared_ptr<Object>> &objects);
-  void publishRays(const std::vector<Eigen::Vector3d> &rays,
-                   const std::string &lidar_frame, double ray_length);
+  void publishRay(const Eigen::Vector3d &start, const Eigen::Vector3d &end,
+                                const std::string &ns, double width,
+                                const std::array<float, 4> &color);
+  void publishPlane(const Plane &plane, const std::string &ns,
+                                  const std::array<float, 4> &color);
 
  private:
   rclcpp::Node::SharedPtr node_;

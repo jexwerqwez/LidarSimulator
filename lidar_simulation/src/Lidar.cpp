@@ -108,3 +108,5 @@ pcl::PointCloud<pcl::PointXYZI>::Ptr Lidar::scan() {
 
   return cloud;
 }
+
+std::vector<Eigen::Vector3d> Lidar::getRays() const { return rays_; }

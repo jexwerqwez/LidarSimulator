@@ -60,8 +60,26 @@ LidarController::LidarController(rclcpp::Node::SharedPtr node)
 
 void LidarController::run() { rclcpp::spin(node_); }
 
+// void LidarController::publishData() {
+//   auto cloud = lidar_.scan();
+//   visualization_.publishPointCloud(cloud);  // публикация облака точек
+//   visualization_.publishMarkers(objects_);  // публикация маркеров
+// }
+
 void LidarController::publishData() {
   auto cloud = lidar_.scan();
-  visualization_.publishPointCloud(cloud);  // публикация облака точек
-  visualization_.publishMarkers(objects_);  // публикация маркеров
+  visualization_.publishPointCloud(cloud);
+  visualization_.publishMarkers(objects_);
+  Eigen::Vector3d ray_origin(0.0, 0.0, 5.0);
+  Eigen::Vector3d ray_direction(0.0, 0.0, -1.0);
+  double max_range = 10.0;
+
+  Eigen::Vector3d ray_end = ray_origin + ray_direction * max_range;
+
+  visualization_.publishRay(ray_origin, ray_end, "test_ray", 0.05,
+                            {1.0, 0.0, 0.0, 1.0});
+
+  Position3D plane_pos(0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+  Plane test_plane(plane_pos, 10.0, 10.0);
+  visualization_.publishPlane(test_plane, "test_plane", {0.0, 1.0, 0.0, 0.5});
 }
