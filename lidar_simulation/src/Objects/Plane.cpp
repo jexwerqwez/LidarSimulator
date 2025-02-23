@@ -12,16 +12,16 @@ bool Plane::intersects(const Eigen::Vector3d &ray_origin,
   Eigen::Vector3d normal =
       position_.orientation.toRotationMatrix() * Eigen::Vector3d::UnitY();
 
-  std::cout << "Ray Origin: " << ray_origin.transpose() << std::endl;
-  std::cout << "Ray Direction: " << ray_direction.transpose() << std::endl;
-  std::cout << "Plane Normal: " << normal.transpose() << std::endl;
+  // std::cout << "Ray Origin: " << ray_origin.transpose() << std::endl;
+  // std::cout << "Ray Direction: " << ray_direction.transpose() << std::endl;
+  // std::cout << "Plane Normal: " << normal.transpose() << std::endl;
 
   double d = -normal.dot(Eigen::Vector3d(
       position_.position.x, position_.position.y, position_.position.z));
 
   double denom = ray_direction.dot(normal);
   if (std::abs(denom) < 1e-6) {
-    std::cout << "Ray is parallel to plane." << std::endl;
+    // std::cout << "Ray is parallel to plane." << std::endl;
     return false;  // луч параллелен плоскости
   }
 
@@ -32,7 +32,7 @@ bool Plane::intersects(const Eigen::Vector3d &ray_origin,
 
   Eigen::Vector3d P = ray_origin + t * ray_direction;
 
-  std::cout << "Intersection Point: " << P.transpose() << std::endl;
+  // std::cout << "Intersection Point: " << P.transpose() << std::endl;
 
   // проверка находится ли точка внутри размеров плоскости
   Eigen::Vector3d local =

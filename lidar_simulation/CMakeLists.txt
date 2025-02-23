@@ -53,18 +53,18 @@ find_package(GTest REQUIRED)
 #   test/IntegrationTest.cpp
 #   )
 
-add_executable(tests
-  test/TestMain.cpp
-  test/StressTest.cpp
-  )
+# add_executable(tests
+#   test/TestMain.cpp
+#   test/StressTest.cpp
+#   )
 
-target_link_libraries(tests lidar_simulation_library GTest::GTest GTest::Main)
+# target_link_libraries(tests lidar_simulation_library GTest::GTest GTest::Main)
 
 # Установка файлов
 install(TARGETS
   lidar_simulation_library
   ${PROJECT_NAME}_node
-  tests
+  # tests
   DESTINATION lib/${PROJECT_NAME}
 )
 

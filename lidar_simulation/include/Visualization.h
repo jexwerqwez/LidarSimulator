@@ -15,7 +15,8 @@ class Visualization {
  public:
   Visualization(rclcpp::Node::SharedPtr node);
 
-  void publishPointCloud(const pcl::PointCloud<pcl::PointXYZI>::Ptr &cloud);
+  void publishPointCloud(const pcl::PointCloud<pcl::PointXYZI>::Ptr &cloud,
+                                      const pcl::PointCloud<pcl::PointXYZI>::Ptr &noisy_cloud);
   void publishMarkers(const std::vector<std::shared_ptr<Object>> &objects);
   void publishRay(const Eigen::Vector3d &start, const Eigen::Vector3d &end,
                                 const std::string &ns, double width,

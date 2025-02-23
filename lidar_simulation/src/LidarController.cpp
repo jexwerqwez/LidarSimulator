@@ -24,15 +24,15 @@ LidarController::LidarController(rclcpp::Node::SharedPtr node)
                    laser_range, horizontal_step);
 
   // инициализация плоскостей
-  Position3D plane1_pos(0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
-  auto plane1 = std::make_shared<Plane>(plane1_pos, 10.0, 10.0);
-  objects_.push_back(plane1);
-  lidar_.addObject(plane1);
+//   Position3D plane1_pos(0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+//   auto plane1 = std::make_shared<Plane>(plane1_pos, 10.0, 10.0);
+//   objects_.push_back(plane1);
+//   lidar_.addObject(plane1);
 
-  Position3D plane2_pos(1.0, 0.0, 0.0, 10.0 * M_PI / 180.0, 0.0, 0.0);
-  auto plane2 = std::make_shared<Plane>(plane2_pos, 10.0, 10.0);
-  objects_.push_back(plane2);
-  lidar_.addObject(plane2);
+//   Position3D plane2_pos(1.0, 0.0, 0.0, 10.0 * M_PI / 180.0, 0.0, 0.0);
+//   auto plane2 = std::make_shared<Plane>(plane2_pos, 10.0, 10.0);
+//   objects_.push_back(plane2);
+//   lidar_.addObject(plane2);
 
   // инициализация сфер
   auto sphere1 =
@@ -43,14 +43,18 @@ LidarController::LidarController(rclcpp::Node::SharedPtr node)
       Position3D(-3.0, -1.0, -1.0, 0.0, 0.0, 0.0), 0.2);
   auto sphere4 =
       std::make_shared<Sphere>(Position3D(3.0, -1.0, -1.0, 0.0, 0.0, 0.0), 0.5);
+  auto sphere5 =
+      std::make_shared<Sphere>(Position3D(-1.0, -3.0, -3.0, 0.0, 1.0, 0.0), 6.0);
   objects_.push_back(sphere1);
   objects_.push_back(sphere2);
   objects_.push_back(sphere3);
   objects_.push_back(sphere4);
+  objects_.push_back(sphere5);
   lidar_.addObject(sphere1);
   lidar_.addObject(sphere2);
   lidar_.addObject(sphere3);
   lidar_.addObject(sphere4);
+  lidar_.addObject(sphere5);
 
   // таймер для публикации данных
   timer_ =
@@ -67,9 +71,9 @@ void LidarController::run() { rclcpp::spin(node_); }
 // }
 
 void LidarController::publishData() {
-  auto cloud = lidar_.scan();
-  visualization_.publishPointCloud(cloud);
-  visualization_.publishMarkers(objects_);
+    auto cloud_pair = lidar_.scan();
+    visualization_.publishPointCloud(cloud_pair.first, cloud_pair.second);
+    visualization_.publishMarkers(objects_);
   Eigen::Vector3d ray_origin(0.0, 0.0, 5.0);
   Eigen::Vector3d ray_direction(0.0, 0.0, -1.0);
   double max_range = 10.0;

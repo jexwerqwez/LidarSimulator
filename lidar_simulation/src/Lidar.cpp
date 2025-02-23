@@ -1,6 +1,7 @@
 #include "../include/Lidar.h"
 
 #include <cmath>
+#include <random>
 
 Lidar::Lidar(rclcpp::Node::SharedPtr node)
     : node_(node),
@@ -61,12 +62,22 @@ void Lidar::generateRays() {
 }
 
 // функция для поиска точек пересечения лучей с объектами
-pcl::PointCloud<pcl::PointXYZI>::Ptr Lidar::scan() {
-  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(
-      new pcl::PointCloud<pcl::PointXYZI>());
+std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr, pcl::PointCloud<pcl::PointXYZI>::Ptr> Lidar::scan() {
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>());
+    pcl::PointCloud<pcl::PointXYZI>::Ptr noisy_cloud(new pcl::PointCloud<pcl::PointXYZI>());
+
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_real_distribution<double> drop_dist(0.0, 1.0);
+  std::normal_distribution<double> noise_dist(0.0, 0.02);
+  double drop_ratio = 0.1;  // 10% точек будет удалено
 
   // для каждого луча ищем ближайшую точку пересечения
   for (const auto &ray : rays_) {
+    if (drop_dist(gen) < drop_ratio) {
+        continue;  // пропускаем точку
+    }
+
     Eigen::Vector3d ray_origin(0.0, 0.0, lidar_height_);
     Eigen::Vector3d ray_direction = ray;
 
@@ -98,6 +109,15 @@ pcl::PointCloud<pcl::PointXYZI>::Ptr Lidar::scan() {
       point.z = nearest_point.z;
       point.intensity = min_distance;
       cloud->points.push_back(point);
+
+      // добавляем шум
+      double noise_stddev = 0.02 * min_distance;  // 2% от расстояния
+      std::normal_distribution<double> noise_dist(0.0, noise_stddev);
+      pcl::PointXYZI noisy_point = point;
+      noisy_point.x += noise_dist(gen);
+      noisy_point.y += noise_dist(gen);
+      noisy_point.z += noise_dist(gen);
+      noisy_cloud->points.push_back(noisy_point);
     }
   }
 
@@ -106,7 +126,12 @@ pcl::PointCloud<pcl::PointXYZI>::Ptr Lidar::scan() {
   cloud->height = 1;
   cloud->is_dense = false;
 
-  return cloud;
+  noisy_cloud->width = noisy_cloud->points.size();
+  noisy_cloud->height = 1;
+  noisy_cloud->is_dense = false;
+
+  // Возвращаем два облака
+  return std::make_pair(cloud, noisy_cloud);
 }
 
 std::vector<Eigen::Vector3d> Lidar::getRays() const { return rays_; }

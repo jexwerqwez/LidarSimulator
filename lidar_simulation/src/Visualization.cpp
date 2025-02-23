@@ -4,21 +4,28 @@
 
 #include "../include/Objects/Plane.h"
 
-Visualization::Visualization(rclcpp::Node::SharedPtr node) : node_(node) {
+Visualization::Visualization (rclcpp::Node::SharedPtr node) : node_(node) {
   point_cloud_pub_ = node_->create_publisher<sensor_msgs::msg::PointCloud2>(
-      "lidar_points", 10);
+      "lidar_points", 10); 
   marker_pub_ = node_->create_publisher<visualization_msgs::msg::Marker>(
       "visualization_marker", 10);
 }
 
 // публикация облака точек в топик
-void Visualization::publishPointCloud(
-    const pcl::PointCloud<pcl::PointXYZI>::Ptr &cloud) {
-  sensor_msgs::msg::PointCloud2 output;
-  pcl::toROSMsg(*cloud, output);
-  output.header.frame_id = "lidar_frame";
-  output.header.stamp = node_->now();
-  point_cloud_pub_->publish(output);
+void Visualization::publishPointCloud(const pcl::PointCloud<pcl::PointXYZI>::Ptr &cloud,
+                                      const pcl::PointCloud<pcl::PointXYZI>::Ptr &noisy_cloud) {
+  sensor_msgs::msg::PointCloud2 ideal_output, noisy_output;
+  
+  // pcl::toROSMsg(*cloud, ideal_output);
+  // ideal_output.header.frame_id = "lidar_frame";
+  // ideal_output.header.stamp = node_->now();
+  // point_cloud_pub_->publish(ideal_output);
+
+  pcl::toROSMsg(*noisy_cloud, noisy_output);
+  noisy_output.header.frame_id = "lidar_frame";
+  noisy_output.header.stamp = node_->now();
+  noisy_output.header.stamp = node_->now();
+  point_cloud_pub_->publish(noisy_output);
 }
 
 // публикация маркеров объектов для визуализации

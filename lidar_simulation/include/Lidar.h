@@ -21,7 +21,7 @@ class Lidar {
 
   void addObject(std::shared_ptr<Object> object);
 
-  pcl::PointCloud<pcl::PointXYZI>::Ptr scan();
+  std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr, pcl::PointCloud<pcl::PointXYZI>::Ptr> scan();
 
   std::vector<Eigen::Vector3d> getRays() const; 
 

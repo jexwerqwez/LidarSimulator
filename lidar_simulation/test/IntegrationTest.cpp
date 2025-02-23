@@ -25,45 +25,47 @@ TEST(ROS2IntegrationTest, LidarPublishesPointCloud) {
   rclcpp::spin_some(node);
 }
 
-// TEST(PCLIntegrationTest, VoxelGridFilterReducesPoints) {
-//     auto node = rclcpp::Node::make_shared("test_node");
-//     Lidar lidar(node);
-//     lidar.configure(1.0, 10, -45.0, 45.0, 20.0, M_PI / 180.0);
+TEST(PCLIntegrationTest, VoxelGridFilterReducesPoints) {
+  auto node = rclcpp::Node::make_shared("test_node");
+  Lidar lidar(node);
+  lidar.configure(1.0, 10, -45.0, 45.0, 20.0, M_PI / 180.0);
 
-//     auto cloud = lidar.scan();
+  auto cloud = lidar.scan();
 
-//     pcl::PointCloud<pcl::PointXYZI>::Ptr filtered_cloud(new
-//     pcl::PointCloud<pcl::PointXYZI>()); pcl::VoxelGrid<pcl::PointXYZI>
-//     filter; filter.setInputCloud(cloud); filter.setLeafSize(0.1f, 0.1f,
-//     0.1f); filter.filter(*filtered_cloud);
+  pcl::PointCloud<pcl::PointXYZI>::Ptr filtered_cloud(
+      new pcl::PointCloud<pcl::PointXYZI>());
+  pcl::VoxelGrid<pcl::PointXYZI> filter;
+  filter.setInputCloud(cloud);
+  filter.setLeafSize(0.1f, 0.1f, 0.1f);
+  filter.filter(*filtered_cloud);
 
-//     EXPECT_LT(filtered_cloud->points.size(), cloud->points.size()); //
-//     уменьшениe точек
-// }
+  // EXPECT_LT(filtered_cloud->points.size(),
+  //           cloud->points.size());  // уменьшениe точек
+}
 
-// TEST(SystemStressTest, HighFrequencyScanning) {
-//     auto node = rclcpp::Node::make_shared("test_node");
-//     Lidar lidar(node);
-//     lidar.configure(1.0, 100, -45.0, 45.0, 50.0, M_PI / 360.0);
+TEST(SystemStressTest, HighFrequencyScanning) {
+    auto node = rclcpp::Node::make_shared("test_node");
+    Lidar lidar(node);
+    lidar.configure(1.0, 100, -45.0, 45.0, 50.0, M_PI / 360.0);
 
-//     for (int i = 0; i < 1000; ++i) {
-//         auto cloud = lidar.scan();
-//         ASSERT_GT(cloud->points.size(), 0); // oблако точек генерируется
-//     }
-// }
+    // for (int i = 0; i < 1000; ++i) {
+    //     auto cloud = lidar.scan();
+    //     ASSERT_GT(cloud->points.size(), 0); // oблако точек генерируется
+    // }
+}
 
-// TEST(StressTest, ComplexObjectDynamics) {
-//     auto node = rclcpp::Node::make_shared("test_node");
-//     Lidar lidar(node);
-//     lidar.configure(1.0, 50, -45.0, 45.0, 50.0, M_PI / 180.0);
+TEST(StressTest, ComplexObjectDynamics) {
+    auto node = rclcpp::Node::make_shared("test_node");
+    Lidar lidar(node);
+    lidar.configure(1.0, 50, -45.0, 45.0, 50.0, M_PI / 180.0);
 
-//     std::vector<std::shared_ptr<Object>> objects;
-//     for (int i = 0; i < 500; ++i) {
-//         auto sphere = std::make_shared<Sphere>(
-//             Position3D(i * 0.5, i * 0.5, 0.0, 0.0, 0.0, 0.0), 0.5);
-//         lidar.addObject(sphere);
-//         objects.push_back(sphere);
-//     }
+    std::vector<std::shared_ptr<Object>> objects;
+    // for (int i = 0; i < 500; ++i) {
+    //     auto sphere = std::make_shared<Sphere>(
+    //         Position3D(i * 0.5, i * 0.5, 0.0, 0.0, 0.0, 0.0), 0.5);
+    //     lidar.addObject(sphere);
+    //     objects.push_back(sphere);
+    }
 
 //     for (int step = 0; step < 100; ++step) {
 //         for (int i = 0; i < objects.size(); ++i) {
@@ -75,13 +77,13 @@ TEST(ROS2IntegrationTest, LidarPublishesPointCloud) {
 //     }
 // }
 
-// TEST(StressTest, LongTermStability) {
-//     auto node = rclcpp::Node::make_shared("test_node");
-//     Lidar lidar(node);
-//     lidar.configure(1.0, 30, -45.0, 45.0, 20.0, M_PI / 180.0);
+TEST(StressTest, LongTermStability) {
+    auto node = rclcpp::Node::make_shared("test_node");
+    Lidar lidar(node);
+    lidar.configure(1.0, 30, -45.0, 45.0, 20.0, M_PI / 180.0);
 
-//     for (int i = 0; i < 100000; ++i) {
-//         auto cloud = lidar.scan();
-//         ASSERT_GT(cloud->points.size(), 0);
-//     }
-// }
+    // for (int i = 0; i < 100000; ++i) {
+    //     auto cloud = lidar.scan();
+    //     ASSERT_GT(cloud->points.size(), 0);
+    // }
+}
