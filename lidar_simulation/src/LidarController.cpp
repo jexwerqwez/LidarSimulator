@@ -2,6 +2,7 @@
 
 #include "../include/Objects/Plane.h"
 #include "../include/Objects/Sphere.h"
+#include "../include/Objects/Cylinder.h"
 
 LidarController::LidarController(rclcpp::Node::SharedPtr node)
     : lidar_(node), visualization_(node), node_(node) {
@@ -46,15 +47,20 @@ LidarController::LidarController(rclcpp::Node::SharedPtr node)
   auto sphere5 =
       std::make_shared<Sphere>(Position3D(-1.0, -3.0, -3.0, 0.0, 1.0, 0.0), 6.0);
   objects_.push_back(sphere1);
-  objects_.push_back(sphere2);
-  objects_.push_back(sphere3);
-  objects_.push_back(sphere4);
-  objects_.push_back(sphere5);
-  lidar_.addObject(sphere1);
-  lidar_.addObject(sphere2);
-  lidar_.addObject(sphere3);
-  lidar_.addObject(sphere4);
-  lidar_.addObject(sphere5);
+//   objects_.push_back(sphere2);
+//   objects_.push_back(sphere3);
+//   objects_.push_back(sphere4);
+//   objects_.push_back(sphere5);
+//   lidar_.addObject(sphere1);
+//   lidar_.addObject(sphere2);
+//   lidar_.addObject(sphere3);
+//   lidar_.addObject(sphere4);
+//   lidar_.addObject(sphere5);
+
+    // инициализация цилиндров
+    auto cylinder1 = std::make_shared<Cylinder>(Position3D(2.0, 2.0, 0.0, 0.0, 0.0, 0.0), 3.0, 4.0);
+    objects_.push_back(cylinder1);
+    lidar_.addObject(cylinder1);
 
   // таймер для публикации данных
   timer_ =

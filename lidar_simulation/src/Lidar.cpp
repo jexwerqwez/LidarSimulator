@@ -111,8 +111,9 @@ std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr, pcl::PointCloud<pcl::PointXYZI>:
       cloud->points.push_back(point);
 
       // добавляем шум
-      double noise_stddev = 0.02 * min_distance;  // 2% от расстояния
-      std::normal_distribution<double> noise_dist(0.0, noise_stddev);
+      double noise_factor = 0.01 * min_distance + 0.005 * min_distance * min_distance;  // квадратично
+      std::normal_distribution<double> noise_dist(0.0, noise_factor);
+
       pcl::PointXYZI noisy_point = point;
       noisy_point.x += noise_dist(gen);
       noisy_point.y += noise_dist(gen);

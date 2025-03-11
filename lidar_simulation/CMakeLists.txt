@@ -21,6 +21,7 @@ include_directories(
 add_library(lidar_simulation_library
   src/Objects/Plane.cpp
   src/Objects/Sphere.cpp
+  src/Objects/Cylinder.cpp
   src/Lidar.cpp
   src/Visualization.cpp
   src/LidarController.cpp
@@ -67,6 +68,8 @@ install(TARGETS
   # tests
   DESTINATION lib/${PROJECT_NAME}
 )
+
+set(CMAKE_PROJECT_NAME lidar_simulation)
 
 # Упаковка для ROS 2
 ament_package()
