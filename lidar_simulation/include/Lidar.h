@@ -3,6 +3,12 @@
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
+
+#include <tf2_ros/transform_broadcaster.h>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <geometry_msgs/msg/twist.hpp>
 
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
@@ -20,12 +26,15 @@ class Lidar {
                  double alpha_end, double laser_range, double horizontal_step);
 
   void addObject(std::shared_ptr<Object> object);
-
   std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr, pcl::PointCloud<pcl::PointXYZI>::Ptr> scan();
 
-  std::vector<Eigen::Vector3d> getRays() const; 
+  void updatePosition(double linear_velocity, double angular_velocity, double dt);
+  void publishTransform();
+  void publishPointCloud();
+  void loadParametersFromYaml();  
 
  private:
+  Position3D position_;
   void generateRays();
 
   rclcpp::Node::SharedPtr node_;
@@ -34,10 +43,13 @@ class Lidar {
   double alpha_begin_;
   double alpha_end_;
   double laser_range_;
-  double horizontal_step_;  // шаг по горизонтали в радианах
+  double horizontal_step_;
 
-  std::vector<Eigen::Vector3d> rays_;  // лучи в локальной СК лидара
+  std::vector<Eigen::Vector3d> rays_;
   std::vector<std::shared_ptr<Object>> objects_;
+
+  std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr cloud_publisher_;
 };
 
 #endif  // LIDAR_H

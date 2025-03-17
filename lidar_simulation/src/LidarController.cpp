@@ -5,7 +5,7 @@
 #include "../include/Objects/Cylinder.h"
 
 LidarController::LidarController(rclcpp::Node::SharedPtr node)
-    : lidar_(node), visualization_(node), node_(node) {
+    : lidar_(node), visualization_(node), node_(node), linear_velocity_(0.0), angular_velocity_(0.0) {
   // инициализация параметров для лидара
   double lidar_height = node_->declare_parameter(
       "lidar_height", 1.0);  // высота лидара над землёй
@@ -23,7 +23,10 @@ LidarController::LidarController(rclcpp::Node::SharedPtr node)
 
   lidar_.configure(lidar_height, num_lasers, alpha_begin, alpha_end,
                    laser_range, horizontal_step);
-
+   cmd_vel_sub_ = node_->create_subscription<geometry_msgs::msg::Twist>(
+    "/cmd_vel", 10,
+    std::bind(&LidarController::cmdVelCallback, this, std::placeholders::_1));
+              
   // инициализация плоскостей
 //   Position3D plane1_pos(0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
 //   auto plane1 = std::make_shared<Plane>(plane1_pos, 10.0, 10.0);
@@ -62,10 +65,13 @@ LidarController::LidarController(rclcpp::Node::SharedPtr node)
     objects_.push_back(cylinder1);
     lidar_.addObject(cylinder1);
 
-  // таймер для публикации данных
-  timer_ =
-      node_->create_wall_timer(std::chrono::milliseconds(100),
-                               std::bind(&LidarController::publishData, this));
+  // Подписка на команду движения
+  cmd_vel_sub_ = node_->create_subscription<geometry_msgs::msg::Twist>(
+    "/cmd_vel", 10, std::bind(&LidarController::cmdVelCallback, this, std::placeholders::_1));
+
+// Таймер для обновления данных
+timer_ = node_->create_wall_timer(
+    std::chrono::milliseconds(100), std::bind(&LidarController::publishData, this));
 }
 
 void LidarController::run() { rclcpp::spin(node_); }
@@ -76,20 +82,13 @@ void LidarController::run() { rclcpp::spin(node_); }
 //   visualization_.publishMarkers(objects_);  // публикация маркеров
 // }
 
-void LidarController::publishData() {
-    auto cloud_pair = lidar_.scan();
-    visualization_.publishPointCloud(cloud_pair.first, cloud_pair.second);
-    visualization_.publishMarkers(objects_);
-  Eigen::Vector3d ray_origin(0.0, 0.0, 5.0);
-  Eigen::Vector3d ray_direction(0.0, 0.0, -1.0);
-  double max_range = 10.0;
 
-  Eigen::Vector3d ray_end = ray_origin + ray_direction * max_range;
-
-  visualization_.publishRay(ray_origin, ray_end, "test_ray", 0.05,
-                            {1.0, 0.0, 0.0, 1.0});
-
-  Position3D plane_pos(0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
-  Plane test_plane(plane_pos, 10.0, 10.0);
-  visualization_.publishPlane(test_plane, "test_plane", {0.0, 1.0, 0.0, 0.5});
-}
+void LidarController::cmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr msg) {
+    linear_velocity_ = msg->linear.x;
+    angular_velocity_ = msg->angular.z;
+  }
+  
+  void LidarController::publishData() {
+    double dt = 0.1;  // период таймера
+    lidar_.updatePosition(linear_velocity_, angular_velocity_, dt);
+  }

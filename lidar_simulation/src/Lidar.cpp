@@ -3,15 +3,32 @@
 #include <cmath>
 #include <random>
 
-Lidar::Lidar(rclcpp::Node::SharedPtr node)
-    : node_(node),
-      lidar_height_(1.0),
-      num_lasers_(30),
-      alpha_begin_(-45.0),
-      alpha_end_(45.0),
-      laser_range_(20.0),
-      horizontal_step_(M_PI / 180.0)  // 1 градус
-{}
+#include <rclcpp/parameter.hpp>
+
+Lidar::Lidar(rclcpp::Node::SharedPtr node) : node_(node) {
+  loadParametersFromYaml();
+  configure(lidar_height_, num_lasers_, alpha_begin_, alpha_end_, laser_range_, horizontal_step_);
+
+  tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(node_);
+  cloud_publisher_ = node_->create_publisher<sensor_msgs::msg::PointCloud2>("lidar/point_cloud", 10);
+}
+
+
+void Lidar::loadParametersFromYaml() {
+  node_->declare_parameter("lidar.lidar_height", 10.0);
+  node_->declare_parameter("lidar.num_lasers", 30);
+  node_->declare_parameter("lidar.alpha_begin", -45.0);
+  node_->declare_parameter("lidar.alpha_end", 45.0);
+  node_->declare_parameter("lidar.laser_range", 20.0);
+  node_->declare_parameter("lidar.horizontal_step", 0.0174533);
+
+  lidar_height_ = node_->get_parameter("lidar.lidar_height").as_double();
+  num_lasers_ = node_->get_parameter("lidar.num_lasers").as_int();
+  alpha_begin_ = node_->get_parameter("lidar.alpha_begin").as_double();
+  alpha_end_ = node_->get_parameter("lidar.alpha_end").as_double();
+  laser_range_ = node_->get_parameter("lidar.laser_range").as_double();
+  horizontal_step_ = node_->get_parameter("lidar.horizontal_step").as_double();
+}
 
 void Lidar::configure(double lidar_height, int num_lasers, double alpha_begin,
                       double alpha_end, double laser_range,
@@ -135,4 +152,45 @@ std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr, pcl::PointCloud<pcl::PointXYZI>:
   return std::make_pair(cloud, noisy_cloud);
 }
 
-std::vector<Eigen::Vector3d> Lidar::getRays() const { return rays_; }
+// std::vector<Eigen::Vector3d> Lidar::getRays() const { return rays_; }
+
+void Lidar::publishPointCloud() {
+  auto [cloud, noisy_cloud] = scan();
+  sensor_msgs::msg::PointCloud2 cloud_msg;
+  pcl::toROSMsg(*cloud, cloud_msg);
+  cloud_msg.header.frame_id = "lidar_frame";
+  cloud_msg.header.stamp = node_->now();
+  cloud_publisher_->publish(cloud_msg);
+}
+
+void Lidar::updatePosition(double linear_velocity, double angular_velocity, double dt) {
+  Eigen::Vector3d forward = position_.orientation * Eigen::Vector3d(1, 0, 0);
+
+  position_.position.x += linear_velocity * dt * forward.x();
+  position_.position.y += linear_velocity * dt * forward.y();
+  position_.position.z += linear_velocity * dt * forward.z();
+
+  Eigen::AngleAxisd yawRotation(angular_velocity * dt, Eigen::Vector3d::UnitZ());
+  position_.orientation = position_.orientation * yawRotation;
+
+  publishTransform();
+  publishPointCloud();
+}
+
+void Lidar::publishTransform() {
+  geometry_msgs::msg::TransformStamped transform;
+  transform.header.stamp = node_->now();
+  transform.header.frame_id = "map";  // Глобальная система координат
+  transform.child_frame_id = "lidar_frame";
+
+  transform.transform.translation.x = position_.position.x;
+  transform.transform.translation.y = position_.position.y;
+  transform.transform.translation.z = position_.position.z;
+
+  transform.transform.rotation.x = position_.orientation.x();
+  transform.transform.rotation.y = position_.orientation.y();
+  transform.transform.rotation.z = position_.orientation.z();
+  transform.transform.rotation.w = position_.orientation.w();
+
+  tf_broadcaster_->sendTransform(transform);
+}
