@@ -32,6 +32,7 @@ class Lidar {
   void publishTransform();
   void publishPointCloud();
   void loadParametersFromYaml();  
+  Eigen::Vector3d getPosition() const;
 
  private:
   Position3D position_;

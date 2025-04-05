@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>trunk_detector</name>
+  <version>0.1.0</version>
+  <description>The trunk_detector package</description>
+
+  <maintainer email="alexey@todo.todo">alexey</maintainer>
+  <license>BSD</license>
+
+  <!-- Build tool -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- Зависимости выполнения и сборки -->
+  <depend>rclcpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>trunk_detector_msgs</depend>
+  <depend>pcl_conversions</depend>
+  <depend>pcl_ros</depend>
+  <depend>rosidl_default_generators</depend>
+  <depend>std_msgs</depend>
+  <depend>visualization_msgs</depend>
+  <exec_depend>rosidl_default_runtime</exec_depend>
+
+  <!-- Экспортируемая информация -->
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

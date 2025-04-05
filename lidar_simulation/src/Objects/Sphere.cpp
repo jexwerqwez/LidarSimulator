@@ -58,9 +58,9 @@ visualization_msgs::msg::Marker Sphere::getMarker(int id) const {
   marker.pose.orientation.z = position_.orientation.z();
   marker.pose.orientation.w = position_.orientation.w();
 
-  marker.scale.x = radius_ * 2.0;
-  marker.scale.y = radius_ * 2.0;
-  marker.scale.z = radius_ * 2.0;
+  marker.scale.x = std::abs(radius_ * 2.0);
+  marker.scale.y = std::abs(radius_ * 2.0);
+  marker.scale.z = std::abs(radius_ * 2.0);
 
   marker.color.r = 1.0f;
   marker.color.g = 0.0f;

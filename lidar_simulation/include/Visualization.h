@@ -23,6 +23,7 @@ class Visualization {
                                 const std::array<float, 4> &color);
   void publishPlane(const Plane &plane, const std::string &ns,
                                   const std::array<float, 4> &color);
+  void publishLidarMarker(const Position3D &position);
 
  private:
   rclcpp::Node::SharedPtr node_;

@@ -65,8 +65,13 @@ find_package(GTest REQUIRED)
 install(TARGETS
   lidar_simulation_library
   ${PROJECT_NAME}_node
-  # tests
   DESTINATION lib/${PROJECT_NAME}
+)
+
+# Установка launch-файлов
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME}
 )
 
 set(CMAKE_PROJECT_NAME lidar_simulation)

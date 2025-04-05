@@ -15,16 +15,14 @@ Visualization::Visualization (rclcpp::Node::SharedPtr node) : node_(node) {
 void Visualization::publishPointCloud(const pcl::PointCloud<pcl::PointXYZI>::Ptr &cloud,
                                       const pcl::PointCloud<pcl::PointXYZI>::Ptr &noisy_cloud) {
   sensor_msgs::msg::PointCloud2 ideal_output, noisy_output;
-  
-  // pcl::toROSMsg(*cloud, ideal_output);
-  // ideal_output.header.frame_id = "lidar_frame";
-  // ideal_output.header.stamp = node_->now();
-  // point_cloud_pub_->publish(ideal_output);
-
+  if (noisy_cloud->points.empty()) {
+    RCLCPP_WARN(node_->get_logger(), "Noisy cloud is empty! Nothing to publish.");
+    return;
+}
   pcl::toROSMsg(*noisy_cloud, noisy_output);
   noisy_output.header.frame_id = "lidar_frame";
   noisy_output.header.stamp = node_->now();
-  noisy_output.header.stamp = node_->now();
+  
   point_cloud_pub_->publish(noisy_output);
 }
 
@@ -102,6 +100,31 @@ void Visualization::publishPlane(const Plane &plane, const std::string &ns,
   marker.color.g = color[1];
   marker.color.b = color[2];
   marker.color.a = color[3];
+
+  marker_pub_->publish(marker);
+}
+
+void Visualization::publishLidarMarker(const Position3D &position) {
+  visualization_msgs::msg::Marker marker;
+  marker.header.frame_id = "map";
+  marker.header.stamp = node_->now();
+  marker.ns = "lidar";
+  marker.id = 0;
+  marker.type = visualization_msgs::msg::Marker::SPHERE;
+  marker.action = visualization_msgs::msg::Marker::ADD;
+
+  marker.pose.position.x = position.position.x;
+  marker.pose.position.y = position.position.y;
+  marker.pose.position.z = position.position.z;
+
+  marker.scale.x = 0.2;
+  marker.scale.y = 0.2;
+  marker.scale.z = 0.2;
+
+  marker.color.a = 1.0;
+  marker.color.r = 1.0;
+  marker.color.g = 0.0;
+  marker.color.b = 0.0;
 
   marker_pub_->publish(marker);
 }

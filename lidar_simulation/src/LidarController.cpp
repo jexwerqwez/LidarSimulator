@@ -38,18 +38,18 @@ LidarController::LidarController(rclcpp::Node::SharedPtr node)
 //   objects_.push_back(plane2);
 //   lidar_.addObject(plane2);
 
-  // инициализация сфер
-  auto sphere1 =
-      std::make_shared<Sphere>(Position3D(3.0, 0.0, 1.0, 0.0, 0.0, 0.0), 1.0);
-  auto sphere2 =
-      std::make_shared<Sphere>(Position3D(-2.0, 2.0, 0.5, 0.0, 0.0, 0.0), 0.8);
-  auto sphere3 = std::make_shared<Sphere>(
-      Position3D(-3.0, -1.0, -1.0, 0.0, 0.0, 0.0), 0.2);
-  auto sphere4 =
-      std::make_shared<Sphere>(Position3D(3.0, -1.0, -1.0, 0.0, 0.0, 0.0), 0.5);
-  auto sphere5 =
-      std::make_shared<Sphere>(Position3D(-1.0, -3.0, -3.0, 0.0, 1.0, 0.0), 6.0);
-  objects_.push_back(sphere1);
+//   // инициализация сфер
+//   auto sphere1 =
+//       std::make_shared<Sphere>(Position3D(3.0, 0.0, 1.0, 0.0, 0.0, 0.0), 1.0);
+//   auto sphere2 =
+//       std::make_shared<Sphere>(Position3D(-2.0, 2.0, 0.5, 0.0, 0.0, 0.0), 0.8);
+//   auto sphere3 = std::make_shared<Sphere>(
+//       Position3D(-3.0, -1.0, -1.0, 0.0, 0.0, 0.0), 0.2);
+//   auto sphere4 =
+//       std::make_shared<Sphere>(Position3D(3.0, -1.0, -1.0, 0.0, 0.0, 0.0), 0.5);
+//   auto sphere5 =
+//       std::make_shared<Sphere>(Position3D(-1.0, -3.0, -3.0, 0.0, 1.0, 0.0), 6.0);
+//   objects_.push_back(sphere1);
 //   objects_.push_back(sphere2);
 //   objects_.push_back(sphere3);
 //   objects_.push_back(sphere4);
@@ -74,7 +74,41 @@ timer_ = node_->create_wall_timer(
     std::chrono::milliseconds(100), std::bind(&LidarController::publishData, this));
 }
 
-void LidarController::run() { rclcpp::spin(node_); }
+// void LidarController::run() {
+//     using namespace std::chrono_literals;
+    
+//     timer_ = node_->create_wall_timer(100ms, [this]() {
+//         double dt = 0.1;
+
+//         // Обновление позиции лидара
+//         lidar_.updatePosition(linear_velocity_, angular_velocity_, dt);
+
+//         // Получение текущей позиции лидара
+//         Eigen::Vector3d lidar_pos = lidar_.getPosition();
+
+//         // Получение облаков точек
+//         auto [cloud, noisy_cloud] = lidar_.scan();
+
+//         // Публикация данных
+//         visualization_.publishPointCloud(cloud, noisy_cloud);
+//         visualization_.publishRay(lidar_pos, lidar_pos + Eigen::Vector3d(0, 0, 0.1),
+//                                   "lidar_position", 0.1, {1.0, 0.0, 0.0, 1.0});
+//     });
+// }
+
+
+void LidarController::run() {
+    rclcpp::Rate rate(10);  // 10 Гц
+    double dt = 0.1;  // Шаг по времени (10 Гц)
+  
+    while (rclcpp::ok()) {
+        Eigen::Vector3d lidar_pos = lidar_.getPosition();
+      lidar_.updatePosition(linear_velocity_, angular_velocity_, dt);
+      rclcpp::spin_some(node_);
+      rate.sleep();
+    }
+  }
+  
 
 // void LidarController::publishData() {
 //   auto cloud = lidar_.scan();
@@ -84,11 +118,26 @@ void LidarController::run() { rclcpp::spin(node_); }
 
 
 void LidarController::cmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr msg) {
-    linear_velocity_ = msg->linear.x;
-    angular_velocity_ = msg->angular.z;
+    linear_velocity_ = msg->linear.x;  // Получаем линейную скорость
+    angular_velocity_ = msg->angular.z;  // Получаем угловую скорость (вращение вокруг оси Z)
+    publishData();
   }
   
+
   void LidarController::publishData() {
     double dt = 0.1;  // период таймера
     lidar_.updatePosition(linear_velocity_, angular_velocity_, dt);
-  }
+
+    auto [cloud, noisy_cloud] = lidar_.scan();  // получаем облака
+    visualization_.publishPointCloud(cloud, noisy_cloud);  // публикуем в Visualization
+    visualization_.publishMarkers(objects_);  // публикуем маркеры
+}
+
+
+//   void LidarController::publishData() {
+//     //   auto cloud = lidar_.scan();
+//     // visualization_.publishPointCloud(cloud);  // публикация облака точек
+//     // visualization_.publishMarkers(objects_);  // публикация маркеров
+//     double dt = 0.1;  // период таймера
+//     lidar_.updatePosition(linear_velocity_, angular_velocity_, dt);
+//   }

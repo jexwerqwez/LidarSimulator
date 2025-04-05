@@ -6,6 +6,7 @@
 #include <rclcpp/parameter.hpp>
 
 Lidar::Lidar(rclcpp::Node::SharedPtr node) : node_(node) {
+  position_ = Position3D(0.0, 0.0, 0.0, 1.0, 0.0, 0.0); // Начальная позиция
   loadParametersFromYaml();
   configure(lidar_height_, num_lasers_, alpha_begin_, alpha_end_, laser_range_, horizontal_step_);
 
@@ -15,7 +16,7 @@ Lidar::Lidar(rclcpp::Node::SharedPtr node) : node_(node) {
 
 
 void Lidar::loadParametersFromYaml() {
-  node_->declare_parameter("lidar.lidar_height", 10.0);
+  node_->declare_parameter("lidar.lidar_height", 0.0);
   node_->declare_parameter("lidar.num_lasers", 30);
   node_->declare_parameter("lidar.alpha_begin", -45.0);
   node_->declare_parameter("lidar.alpha_end", 45.0);
@@ -163,6 +164,10 @@ void Lidar::publishPointCloud() {
   cloud_publisher_->publish(cloud_msg);
 }
 
+Eigen::Vector3d Lidar::getPosition() const {
+  return {position_.position.x, position_.position.y, position_.position.z};
+}
+
 void Lidar::updatePosition(double linear_velocity, double angular_velocity, double dt) {
   Eigen::Vector3d forward = position_.orientation * Eigen::Vector3d(1, 0, 0);
 
@@ -172,6 +177,9 @@ void Lidar::updatePosition(double linear_velocity, double angular_velocity, doub
 
   Eigen::AngleAxisd yawRotation(angular_velocity * dt, Eigen::Vector3d::UnitZ());
   position_.orientation = position_.orientation * yawRotation;
+
+  RCLCPP_INFO(node_->get_logger(), "Lidar position updated: x=%.2f, y=%.2f, yaw=%.2f",
+              position_.position.x, position_.position.y, angular_velocity * dt);
 
   publishTransform();
   publishPointCloud();
