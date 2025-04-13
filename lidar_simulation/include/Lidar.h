@@ -9,6 +9,10 @@
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <geometry_msgs/msg/twist.hpp>
+#include <pcl/io/pcd_io.h>
+#include <filesystem>
+
+
 
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
@@ -31,6 +35,7 @@ class Lidar {
   void updatePosition(double linear_velocity, double angular_velocity, double dt);
   void publishTransform();
   void publishPointCloud();
+  void savePointCloud(const pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud);
   void loadParametersFromYaml();  
   Eigen::Vector3d getPosition() const;
 

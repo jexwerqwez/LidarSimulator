@@ -1,0 +1,12 @@
+cloud_merger_node:
+  ros__parameters:
+    input_topic_1: "/cloud_1"
+    input_topic_2: "/cloud_2"
+    output_topic: "/merged_cloud"
+    voxel_leaf_size: 0.1         # Размер вокселя в метрах
+    sift_min_scale: 0.01
+    sift_n_octaves: 3
+    sift_n_scales_per_octave: 4
+    sift_min_contrast: 0.001
+    ransac_distance_threshold: 0.05
+    ransac_max_iterations: 1000

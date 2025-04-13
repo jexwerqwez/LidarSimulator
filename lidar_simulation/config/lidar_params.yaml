@@ -5,4 +5,4 @@ lidar:
     alpha_begin: -30.0
     alpha_end: 30.0
     laser_range: 25.0
-    horizontal_step: 0.0174533
+    horizontal_step: 0.0174533 

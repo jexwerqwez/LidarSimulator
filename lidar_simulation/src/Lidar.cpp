@@ -162,6 +162,7 @@ void Lidar::publishPointCloud() {
   cloud_msg.header.frame_id = "lidar_frame";
   cloud_msg.header.stamp = node_->now();
   cloud_publisher_->publish(cloud_msg);
+  savePointCloud(noisy_cloud);
 }
 
 Eigen::Vector3d Lidar::getPosition() const {
@@ -201,4 +202,21 @@ void Lidar::publishTransform() {
   transform.transform.rotation.w = position_.orientation.w();
 
   tf_broadcaster_->sendTransform(transform);
+}
+
+void Lidar::savePointCloud(const pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud) {
+  static int counter = 0;
+  const std::string dir = "/tmp/lidar_clouds/";
+
+  // Создаём директорию, если её нет
+  if (!std::filesystem::exists(dir)) {
+    std::filesystem::create_directories(dir);
+  }
+
+  std::string filename = dir + "cloud_" + std::to_string(counter++) + ".pcd";
+  if (pcl::io::savePCDFileBinary(filename, *cloud) == 0) {
+    RCLCPP_INFO(node_->get_logger(), "Saved point cloud to %s", filename.c_str());
+  } else {
+    RCLCPP_ERROR(node_->get_logger(), "Failed to save point cloud to %s", filename.c_str());
+  }
 }

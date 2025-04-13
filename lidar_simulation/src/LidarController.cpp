@@ -38,30 +38,30 @@ LidarController::LidarController(rclcpp::Node::SharedPtr node)
 //   objects_.push_back(plane2);
 //   lidar_.addObject(plane2);
 
-//   // инициализация сфер
-//   auto sphere1 =
-//       std::make_shared<Sphere>(Position3D(3.0, 0.0, 1.0, 0.0, 0.0, 0.0), 1.0);
-//   auto sphere2 =
-//       std::make_shared<Sphere>(Position3D(-2.0, 2.0, 0.5, 0.0, 0.0, 0.0), 0.8);
-//   auto sphere3 = std::make_shared<Sphere>(
-//       Position3D(-3.0, -1.0, -1.0, 0.0, 0.0, 0.0), 0.2);
-//   auto sphere4 =
-//       std::make_shared<Sphere>(Position3D(3.0, -1.0, -1.0, 0.0, 0.0, 0.0), 0.5);
+  // инициализация сфер
+  auto sphere1 =
+      std::make_shared<Sphere>(Position3D(3.0, 0.0, 1.0, 0.0, 0.0, 0.0), 1.0);
+  auto sphere2 =
+      std::make_shared<Sphere>(Position3D(-2.0, 2.0, 0.5, 0.0, 0.0, 0.0), 0.8);
+  auto sphere3 = std::make_shared<Sphere>(
+      Position3D(-3.0, -1.0, -1.0, 0.0, 0.0, 0.0), 0.2);
+  auto sphere4 =
+      std::make_shared<Sphere>(Position3D(3.0, -1.0, -1.0, 0.0, 0.0, 0.0), 0.5);
 //   auto sphere5 =
 //       std::make_shared<Sphere>(Position3D(-1.0, -3.0, -3.0, 0.0, 1.0, 0.0), 6.0);
-//   objects_.push_back(sphere1);
-//   objects_.push_back(sphere2);
-//   objects_.push_back(sphere3);
-//   objects_.push_back(sphere4);
+  objects_.push_back(sphere1);
+  objects_.push_back(sphere2);
+  objects_.push_back(sphere3);
+  objects_.push_back(sphere4);
 //   objects_.push_back(sphere5);
-//   lidar_.addObject(sphere1);
-//   lidar_.addObject(sphere2);
-//   lidar_.addObject(sphere3);
-//   lidar_.addObject(sphere4);
+  lidar_.addObject(sphere1);
+  lidar_.addObject(sphere2);
+  lidar_.addObject(sphere3);
+  lidar_.addObject(sphere4);
 //   lidar_.addObject(sphere5);
 
     // инициализация цилиндров
-    auto cylinder1 = std::make_shared<Cylinder>(Position3D(2.0, 2.0, 0.0, 0.0, 0.0, 0.0), 3.0, 4.0);
+    auto cylinder1 = std::make_shared<Cylinder>(Position3D(2.0, 2.0, 0.0, 0.0, 0.0, 0.0), 1.0, 1.0);
     objects_.push_back(cylinder1);
     lidar_.addObject(cylinder1);
 
