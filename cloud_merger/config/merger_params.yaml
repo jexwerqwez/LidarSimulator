@@ -1,12 +1,12 @@
 cloud_merger_node:
   ros__parameters:
-    input_topic_1: "/cloud_1"
-    input_topic_2: "/cloud_2"
+    input_file_1: "/tmp/lidar_clouds/cloud1.pcd"
+    input_file_2: "/tmp/lidar_clouds/cloud2.pcd"
+    output_file: "/tmp/lidar_clouds/merged_result.pcd"
     output_topic: "/merged_cloud"
+
     voxel_leaf_size: 0.1         # Размер вокселя в метрах
-    sift_min_scale: 0.01
-    sift_n_octaves: 3
-    sift_n_scales_per_octave: 4
-    sift_min_contrast: 0.001
-    ransac_distance_threshold: 0.05
-    ransac_max_iterations: 1000
+    min_scale: 0.01              # sift_min_scale → min_scale
+    n_octaves: 3                 # sift_n_octaves → n_octaves
+    n_scales_per_octave: 4      # sift_n_scales_per_octave → n_scales_per_octave
+    min_contrast: 0.001         # sift_min_contrast → min_contrast

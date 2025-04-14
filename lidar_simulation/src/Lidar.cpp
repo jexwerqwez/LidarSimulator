@@ -162,7 +162,6 @@ void Lidar::publishPointCloud() {
   cloud_msg.header.frame_id = "lidar_frame";
   cloud_msg.header.stamp = node_->now();
   cloud_publisher_->publish(cloud_msg);
-  savePointCloud(noisy_cloud);
 }
 
 Eigen::Vector3d Lidar::getPosition() const {
@@ -204,8 +203,8 @@ void Lidar::publishTransform() {
   tf_broadcaster_->sendTransform(transform);
 }
 
+
 void Lidar::savePointCloud(const pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud) {
-  static int counter = 0;
   const std::string dir = "/tmp/lidar_clouds/";
 
   // Создаём директорию, если её нет
@@ -213,7 +212,16 @@ void Lidar::savePointCloud(const pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud) {
     std::filesystem::create_directories(dir);
   }
 
-  std::string filename = dir + "cloud_" + std::to_string(counter++) + ".pcd";
+  // Получаем текущее системное время
+  auto now = std::chrono::system_clock::now();
+  std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+
+  // Форматируем дату и время в строку
+  std::ostringstream oss;
+  oss << std::put_time(std::localtime(&now_c), "cloud_%Y-%m-%d_%H-%M-%S.pcd");
+  std::string filename = dir + oss.str();
+
+  // Сохраняем файл
   if (pcl::io::savePCDFileBinary(filename, *cloud) == 0) {
     RCLCPP_INFO(node_->get_logger(), "Saved point cloud to %s", filename.c_str());
   } else {

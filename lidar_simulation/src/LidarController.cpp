@@ -28,10 +28,10 @@ LidarController::LidarController(rclcpp::Node::SharedPtr node)
     std::bind(&LidarController::cmdVelCallback, this, std::placeholders::_1));
               
   // инициализация плоскостей
-//   Position3D plane1_pos(0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
-//   auto plane1 = std::make_shared<Plane>(plane1_pos, 10.0, 10.0);
-//   objects_.push_back(plane1);
-//   lidar_.addObject(plane1);
+  Position3D plane1_pos(0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+  auto plane1 = std::make_shared<Plane>(plane1_pos, 10.0, 10.0);
+  objects_.push_back(plane1);
+  lidar_.addObject(plane1);
 
 //   Position3D plane2_pos(1.0, 0.0, 0.0, 10.0 * M_PI / 180.0, 0.0, 0.0);
 //   auto plane2 = std::make_shared<Plane>(plane2_pos, 10.0, 10.0);
@@ -47,18 +47,18 @@ LidarController::LidarController(rclcpp::Node::SharedPtr node)
       Position3D(-3.0, -1.0, -1.0, 0.0, 0.0, 0.0), 0.2);
   auto sphere4 =
       std::make_shared<Sphere>(Position3D(3.0, -1.0, -1.0, 0.0, 0.0, 0.0), 0.5);
-//   auto sphere5 =
-//       std::make_shared<Sphere>(Position3D(-1.0, -3.0, -3.0, 0.0, 1.0, 0.0), 6.0);
-  objects_.push_back(sphere1);
-  objects_.push_back(sphere2);
-  objects_.push_back(sphere3);
-  objects_.push_back(sphere4);
-//   objects_.push_back(sphere5);
-  lidar_.addObject(sphere1);
-  lidar_.addObject(sphere2);
-  lidar_.addObject(sphere3);
-  lidar_.addObject(sphere4);
-//   lidar_.addObject(sphere5);
+  // auto sphere5 =
+      // std::make_shared<Sphere>(Position3D(-1.0, -3.0, -3.0, 0.0, 1.0, 0.0), 6.0);
+  // objects_.push_back(sphere1);
+  // objects_.push_back(sphere2);
+  // objects_.push_back(sphere3);
+  // objects_.push_back(sphere4);
+  // objects_.push_back(sphere5);
+  // lidar_.addObject(sphere1);
+  // lidar_.addObject(sphere2);
+  // lidar_.addObject(sphere3);
+  // lidar_.addObject(sphere4);
+  // lidar_.addObject(sphere5);
 
     // инициализация цилиндров
     auto cylinder1 = std::make_shared<Cylinder>(Position3D(2.0, 2.0, 0.0, 0.0, 0.0, 0.0), 1.0, 1.0);
@@ -72,7 +72,16 @@ LidarController::LidarController(rclcpp::Node::SharedPtr node)
 // Таймер для обновления данных
 timer_ = node_->create_wall_timer(
     std::chrono::milliseconds(100), std::bind(&LidarController::publishData, this));
-}
+    save_service_ = node_->create_service<std_srvs::srv::Trigger>(
+      "/save_lidar_cloud",
+      [this](const std::shared_ptr<std_srvs::srv::Trigger::Request> req,
+             std::shared_ptr<std_srvs::srv::Trigger::Response> res) {
+        auto [_, noisy_cloud] = lidar_.scan();  // только при ручном вызове
+        lidar_.savePointCloud(noisy_cloud);     // ← сохраняем тут
+        res->success = true;
+        res->message = "Cloud saved via service";
+      });
+  }
 
 // void LidarController::run() {
 //     using namespace std::chrono_literals;

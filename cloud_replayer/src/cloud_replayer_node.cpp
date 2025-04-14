@@ -1,66 +1,74 @@
-#include "../include/cloud_replayer/cloud_replayer_node.h"
+#include "cloud_replayer/cloud_replayer_node.h"
+
 #include <pcl/io/pcd_io.h>
 #include <pcl_conversions/pcl_conversions.h>
-#include <chrono>
-#include <algorithm>
+
+#include <filesystem>
 
 namespace cloud_replayer
 {
 
 CloudReplayerNode::CloudReplayerNode(const rclcpp::NodeOptions &options)
-  : Node("cloud_replayer_node", options), current_index_(0)
+: Node("cloud_replayer_node", options)
 {
-  this->declare_parameter("cloud_directory", "/tmp/lidar_clouds");
-  this->declare_parameter("replay_rate", 1.0);
+  // Загрузка параметров
+  this->declare_parameter<std::string>("input_file_1", "/tmp/lidar_clouds/cloud1.pcd");
+  this->declare_parameter<std::string>("input_file_2", "/tmp/lidar_clouds/cloud2.pcd");
+  this->declare_parameter<double>("replay_rate", 1.0);
 
-  this->get_parameter("cloud_directory", cloud_directory_);
+  this->get_parameter("input_file_1", input_file_1_);
+  this->get_parameter("input_file_2", input_file_2_);
   this->get_parameter("replay_rate", replay_rate_);
 
+  // Паблишеры
   pub_cloud1_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/cloud1", 10);
   pub_cloud2_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/cloud2", 10);
 
-  loadPCDFilenames();
+  // Загрузка файлов
+  loadPCDFiles();
 
-  if (pcd_files_.size() < 2) {
-    RCLCPP_WARN(this->get_logger(), "Not enough .pcd files in %s", cloud_directory_.c_str());
+  // Проверка
+  if (!cloud1_loaded_ || !cloud2_loaded_) {
+    RCLCPP_ERROR(this->get_logger(), "Failed to load input clouds. Exiting.");
+    return;
   }
 
+  // Запуск таймера публикации
   timer_ = this->create_wall_timer(
     std::chrono::duration<double>(1.0 / replay_rate_),
     std::bind(&CloudReplayerNode::replayClouds, this));
 
-  RCLCPP_INFO(this->get_logger(), "CloudReplayerNode ready. Found %zu .pcd files", pcd_files_.size());
+  RCLCPP_INFO(this->get_logger(), "Replayer node started. Replaying two fixed clouds.");
 }
 
-void CloudReplayerNode::loadPCDFilenames()
+void CloudReplayerNode::loadPCDFiles()
 {
-  pcd_files_.clear();
-  for (const auto &entry : std::filesystem::directory_iterator(cloud_directory_)) {
-    if (entry.path().extension() == ".pcd") {
-      pcd_files_.push_back(entry.path().string());
+  if (!input_file_1_.empty() && std::filesystem::exists(input_file_1_)) {
+    if (pcl::io::loadPCDFile<pcl::PointXYZI>(input_file_1_, cloud1_) == 0) {
+      cloud1_loaded_ = true;
+      RCLCPP_INFO(this->get_logger(), "Loaded cloud1 from %s", input_file_1_.c_str());
+    } else {
+      RCLCPP_WARN(this->get_logger(), "Failed to load %s", input_file_1_.c_str());
     }
   }
-  std::sort(pcd_files_.begin(), pcd_files_.end());  // сортировка по имени
+
+  if (!input_file_2_.empty() && std::filesystem::exists(input_file_2_)) {
+    if (pcl::io::loadPCDFile<pcl::PointXYZI>(input_file_2_, cloud2_) == 0) {
+      cloud2_loaded_ = true;
+      RCLCPP_INFO(this->get_logger(), "Loaded cloud2 from %s", input_file_2_.c_str());
+    } else {
+      RCLCPP_WARN(this->get_logger(), "Failed to load %s", input_file_2_.c_str());
+    }
+  }
 }
 
 void CloudReplayerNode::replayClouds()
 {
-  if (pcd_files_.size() < 2) return;
-
-  size_t idx1 = current_index_;
-  size_t idx2 = (current_index_ + 1) % pcd_files_.size();
-
-  pcl::PointCloud<pcl::PointXYZI> cloud1, cloud2;
-  if (pcl::io::loadPCDFile<pcl::PointXYZI>(pcd_files_[idx1], cloud1) == -1 ||
-      pcl::io::loadPCDFile<pcl::PointXYZI>(pcd_files_[idx2], cloud2) == -1) {
-    RCLCPP_WARN(this->get_logger(), "Failed to load PCD files %s or %s", 
-                pcd_files_[idx1].c_str(), pcd_files_[idx2].c_str());
-    return;
-  }
+  if (!cloud1_loaded_ || !cloud2_loaded_) return;
 
   sensor_msgs::msg::PointCloud2 msg1, msg2;
-  pcl::toROSMsg(cloud1, msg1);
-  pcl::toROSMsg(cloud2, msg2);
+  pcl::toROSMsg(cloud1_, msg1);
+  pcl::toROSMsg(cloud2_, msg2);
 
   msg1.header.frame_id = "lidar_frame";
   msg2.header.frame_id = "lidar_frame";
@@ -69,8 +77,6 @@ void CloudReplayerNode::replayClouds()
 
   pub_cloud1_->publish(msg1);
   pub_cloud2_->publish(msg2);
-
-  current_index_ = (current_index_ + 1) % pcd_files_.size();
 }
 
 }  // namespace cloud_replayer

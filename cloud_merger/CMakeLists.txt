@@ -11,6 +11,7 @@ find_package(tf2_ros REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(tf2 REQUIRED)
+find_package(std_srvs REQUIRED)
 
 # Включаем include директории
 include_directories(
@@ -31,6 +32,7 @@ ament_target_dependencies(${PROJECT_NAME}_node
   tf2_ros 
   geometry_msgs
   visualization_msgs
+  std_srvs
 )
 target_link_libraries(${PROJECT_NAME}_node ${PCL_LIBRARIES})
 

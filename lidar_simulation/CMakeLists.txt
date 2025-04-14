@@ -11,6 +11,7 @@ find_package(tf2_ros REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(tf2 REQUIRED)
+find_package(std_srvs REQUIRED)
 
 # Добавление директорий заголовочных файлов
 include_directories(
@@ -36,6 +37,7 @@ ament_target_dependencies(lidar_simulation_library
   tf2_ros 
   geometry_msgs
   visualization_msgs
+  std_srvs
 )
 
 add_executable(${PROJECT_NAME}_node src/Main.cpp)

@@ -5,9 +5,13 @@
 #include <geometry_msgs/msg/twist.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <pcl_conversions/pcl_conversions.h>
+#include <std_srvs/srv/trigger.hpp>
 #include "Lidar.h"
 #include "Objects/Object.h"
 #include "Visualization.h"
+#include <chrono>
+#include <iomanip>
+#include <sstream>
 
 class LidarController {
  public:
@@ -24,7 +28,8 @@ class LidarController {
   rclcpp::TimerBase::SharedPtr timer_;
   std::vector<std::shared_ptr<Object>> objects_;
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
-  
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr save_service_;
+
   double linear_velocity_;
   double angular_velocity_;
 };
