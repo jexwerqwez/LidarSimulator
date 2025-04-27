@@ -1,0 +1,39 @@
+# Примерный RViz2 config для вашей сцены
+Visualization Manager:
+  Class: ""
+  Name: root
+  Displays:
+    - Name: TF
+      Class: rviz_default_plugins/TF
+      Enabled: true
+
+    - Name: Merged Cloud
+      Class: rviz_default_plugins/PointCloud2
+      Topic: /merged_cloud
+      Unreliable: false
+      Queue Size: 10
+      Color Transformer: intensity
+      Size (Pixels): 2
+
+  Global Options:
+    Fixed Frame: map
+
+  Tools:
+    - Class: rviz_default_plugins/Interact
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+    - Class: rviz_default_plugins/Measure
+
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Focal Point: [0, 0, 0]
+      Distance: 10
+      Pitch: 0.785
+      Yaw: 1.57
+
+Panels:
+  - Class: rviz_default_plugins/Displays
+    Name: Displays
+  - Class: rviz_default_plugins/Views
+    Name: Views

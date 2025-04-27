@@ -1,167 +1,209 @@
 #include "cloud_merger/cloud_merger_node.h"
 
-#include <pcl/io/pcd_io.h>
-#include <pcl/features/normal_3d.h>
-#include <pcl/features/fpfh.h>
+#include <pcl/filters/voxel_grid.h>
 #include <pcl/keypoints/sift_keypoint.h>
+#include <pcl/features/normal_3d.h>
 #include <pcl/registration/sample_consensus_prerejective.h>
 #include <pcl/common/transforms.h>
 #include <pcl_conversions/pcl_conversions.h>
-#include <chrono>
-namespace fs = std::filesystem;
+
 using namespace std::chrono_literals;
 
 namespace cloud_merger
 {
 
-CloudMergerNode::CloudMergerNode(const rclcpp::NodeOptions & options)
+CloudMergerNode::CloudMergerNode(const rclcpp::NodeOptions& options)
 : Node("cloud_merger_node", options)
 {
-  this->declare_parameter<std::string>("input_file_1", "/tmp/lidar_clouds/cloud1.pcd");
-  this->declare_parameter<std::string>("input_file_2", "/tmp/lidar_clouds/cloud2.pcd");
-  this->declare_parameter<std::string>("output_file", "/tmp/lidar_clouds/merged_cloud.pcd");
-  this->declare_parameter<std::string>("output_topic", "/merged_cloud");
-  this->declare_parameter("voxel_leaf_size", 0.1);
-  this->declare_parameter("min_scale", 0.01);
-  this->declare_parameter("n_octaves", 3);
-  this->declare_parameter("n_scales_per_octave", 4);
-  this->declare_parameter("min_contrast", 0.001);
+  // --- читаем параметры ---
+  this->declare_parameter<std::vector<std::string>>("input_topics", std::vector<std::string>{});
 
-  this->get_parameter("input_file_1", input_file_1_);
-  this->get_parameter("input_file_2", input_file_2_);
-  this->get_parameter("output_file", output_file_);
-  this->get_parameter("output_topic", output_topic_);
-  this->get_parameter("voxel_leaf_size", voxel_leaf_size_);
-  this->get_parameter("min_scale", min_scale_);
-  this->get_parameter("n_octaves", n_octaves_);
-  this->get_parameter("n_scales_per_octave", n_scales_per_octave_);
-  this->get_parameter("min_contrast", min_contrast_);
+  this->declare_parameter<std::string>             ("output_topic", "/merged_cloud");
+  this->declare_parameter<double>                  ("publish_rate", 1.0);
+  this->declare_parameter<double>                  ("voxel_leaf_size", 0.1);
+  this->declare_parameter<double>                  ("min_scale", 0.01);
+  this->declare_parameter<int>                     ("n_octaves", 3);
+  this->declare_parameter<int>                     ("n_scales_per_octave", 4);
+  this->declare_parameter<double>                  ("min_contrast", 0.001);
 
-  merged_cloud_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
-    output_topic_,
-    rclcpp::QoS(10).transient_local().reliable()
+  this->get_parameter("input_topics",       input_topics_);
+  this->get_parameter("output_topic",       output_topic_);
+  this->get_parameter("publish_rate",       publish_rate_);
+  this->get_parameter("voxel_leaf_size",    voxel_leaf_size_);
+  this->get_parameter("min_scale",          min_scale_);
+  this->get_parameter("n_octaves",          n_octaves_);
+  this->get_parameter("n_scales_per_octave",n_scales_per_octave_);
+  this->get_parameter("min_contrast",       min_contrast_);
+
+  // резервируем места
+  const size_t N = input_topics_.size();
+  clouds_.assign(N, nullptr);
+  received_.assign(N, false);
+
+  // создаём подписчики
+  subs_.reserve(N);
+  for (size_t i = 0; i < N; ++i) {
+    subs_.push_back(
+      this->create_subscription<sensor_msgs::msg::PointCloud2>(
+        input_topics_[i],
+        rclcpp::QoS(10),
+        [this, i](sensor_msgs::msg::PointCloud2::SharedPtr msg) {
+          cloudCallback(i, msg);
+        }
+      )
+    );
+  }
+
+  // паблишер склеенного облака
+  merged_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
+    output_topic_, rclcpp::QoS(10).transient_local().reliable()
   );
 
-  tryMerge();
-
+  // таймер публикации
   timer_ = this->create_wall_timer(
-    500ms, std::bind(&CloudMergerNode::publishMergedCloud, this));
+    std::chrono::duration<double>(1.0/publish_rate_),
+    std::bind(&CloudMergerNode::publishMergedCloud, this)
+  );
 }
 
-void CloudMergerNode::tryMerge()
+void CloudMergerNode::cloudCallback(
+  size_t idx,
+  sensor_msgs::msg::PointCloud2::SharedPtr msg)
 {
-  PointCloudT::Ptr cloud1(new PointCloudT);
-  PointCloudT::Ptr cloud2(new PointCloudT);
-
-  if (pcl::io::loadPCDFile<PointT>(input_file_1_, *cloud1) == -1) {
-    RCLCPP_ERROR(this->get_logger(), "Failed to load %s", input_file_1_.c_str());
-    return;
-  }
-  if (pcl::io::loadPCDFile<PointT>(input_file_2_, *cloud2) == -1) {
-    RCLCPP_ERROR(this->get_logger(), "Failed to load %s", input_file_2_.c_str());
-    return;
-  }
-
-  mergeClouds(cloud1, cloud2);
-}
-
-void CloudMergerNode::mergeClouds(const PointCloudT::Ptr & cloud1, const PointCloudT::Ptr & cloud2)
-{
-  auto filtered1 = applyVoxelFilter(cloud1);
-  auto filtered2 = applyVoxelFilter(cloud2);
-
-  auto keypoints1 = extractKeypoints(filtered1);
-  auto keypoints2 = extractKeypoints(filtered2);
-
-  auto descriptors1 = computeDescriptors(keypoints1, filtered1);
-  auto descriptors2 = computeDescriptors(keypoints2, filtered2);
-
-  auto aligned = alignClouds(filtered1, filtered2, descriptors1, descriptors2, keypoints1, keypoints2);
-
-  if (!fs::exists(output_file_)) {
-    pcl::io::savePCDFileBinary(output_file_, *aligned);
-    RCLCPP_INFO(this->get_logger(), "Saved merged cloud to %s", output_file_.c_str());
-  } else {
-    RCLCPP_WARN(this->get_logger(), "File already exists: %s", output_file_.c_str());
-  }
-
-  merged_cloud_ = aligned;
+  // преобразуем ROS → PCL
+  PointCloudT::Ptr pc(new PointCloudT());
+  pcl::fromROSMsg(*msg, *pc);
+  clouds_[idx]  = pc;
+  received_[idx] = true;
 }
 
 void CloudMergerNode::publishMergedCloud()
 {
-  if (!merged_cloud_ || merged_cloud_->empty()) return;
+  // проверим, что у нас есть хотя бы по одному сообщению из всех подписок
+  for (bool r : received_) {
+    if (!r) {
+      RCLCPP_DEBUG(get_logger(), "waiting for all %zu clouds", received_.size());
+      return;
+    }
+  }
 
-  sensor_msgs::msg::PointCloud2 msg;
-  pcl::toROSMsg(*merged_cloud_, msg);
-  msg.header.frame_id = "map";
-  msg.header.stamp = now();
-  merged_cloud_pub_->publish(msg);
+  // склеиваем
+  auto merged = mergeAll(clouds_);
+  if (!merged || merged->empty()) {
+    RCLCPP_WARN(get_logger(), "merged cloud is empty");
+    return;
+  }
+
+  // публикуем
+  sensor_msgs::msg::PointCloud2 out;
+  pcl::toROSMsg(*merged, out);
+  out.header.stamp    = now();
+  out.header.frame_id = "map";
+  merged_pub_->publish(out);
 }
 
-pcl::PointCloud<PointT>::Ptr CloudMergerNode::applyVoxelFilter(const PointCloudT::Ptr & cloud)
+PointCloudT::Ptr CloudMergerNode::mergeAll(const std::vector<PointCloudPtr> &clouds)
 {
-  pcl::VoxelGrid<PointT> voxel;
-  PointCloudT::Ptr filtered(new PointCloudT());
-  voxel.setInputCloud(cloud);
-  voxel.setLeafSize(voxel_leaf_size_, voxel_leaf_size_, voxel_leaf_size_);
-  voxel.filter(*filtered);
-  return filtered;
+  // входных облаков нет - возвращаем пустое
+  if (clouds.empty()) {
+    return PointCloudPtr(new PointCloudT());
+  }
+
+  // 1) воксельная фильтрация ко всем облакам
+  std::vector<PointCloudPtr> filtered;
+  filtered.reserve(clouds.size());
+  for (auto &c : clouds) {
+    if (c && !c->empty()) {
+      filtered.push_back(applyVoxelFilter(c));
+    }
+  }
+  if (filtered.empty()) {
+    return PointCloudPtr(new PointCloudT());
+  }
+
+  // начинаем с копии первого
+  PointCloudPtr merged(new PointCloudT(*filtered[0]));
+
+  // итеративно выравниваем и склеиваем
+  // for (size_t i = 1; i < filtered.size(); ++i) {
+  //   merged = alignClouds(merged, filtered[i]);
+  // }
+
+  // повторно прогоняем через фильтр
+  // merged = applyVoxelFilter(merged);
+
+  return merged;
 }
 
-pcl::PointCloud<PointT>::Ptr CloudMergerNode::extractKeypoints(const PointCloudT::Ptr & cloud)
+
+PointCloudPtr CloudMergerNode::applyVoxelFilter(const PointCloudPtr &cloud)
+{
+  pcl::VoxelGrid<PointT> vg;
+  PointCloudT::Ptr out(new PointCloudT());
+  vg.setInputCloud(cloud);
+  vg.setLeafSize(voxel_leaf_size_,voxel_leaf_size_,voxel_leaf_size_);
+  vg.filter(*out);
+  return out;
+}
+
+PointCloudPtr CloudMergerNode::extractKeypoints(const PointCloudPtr &cloud)
 {
   pcl::SIFTKeypoint<PointT, pcl::PointWithScale> sift;
-  pcl::PointCloud<pcl::PointWithScale>::Ptr temp(new pcl::PointCloud<pcl::PointWithScale>());
-  pcl::search::KdTree<PointT>::Ptr tree(new pcl::search::KdTree<PointT>());
-
+  pcl::PointCloud<pcl::PointWithScale> tmp;
+  KdTreePtr tree(new pcl::search::KdTree<PointT>());
   sift.setSearchMethod(tree);
   sift.setScales(min_scale_, n_octaves_, n_scales_per_octave_);
   sift.setMinimumContrast(min_contrast_);
   sift.setInputCloud(cloud);
-  sift.compute(*temp);
+  sift.compute(tmp);
 
-  PointCloudT::Ptr keypoints(new PointCloudT());
-  pcl::copyPointCloud(*temp, *keypoints);
+  PointCloudPtr keypoints(new PointCloudT());
+  pcl::copyPointCloud(tmp, *keypoints);
   return keypoints;
 }
 
-DescriptorCloudT::Ptr CloudMergerNode::computeDescriptors(const PointCloudT::Ptr & keypoints,
-                                                          const PointCloudT::Ptr & surface)
+DescriptorPtr CloudMergerNode::computeDescriptors(
+  const PointCloudPtr &keypoints,
+  const PointCloudPtr &surface)
 {
+  // 1) вычисляем нормали
   pcl::NormalEstimation<PointT, pcl::Normal> ne;
-  pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>());
-  pcl::search::KdTree<PointT>::Ptr tree(new pcl::search::KdTree<PointT>());
-
   ne.setInputCloud(surface);
+  KdTreePtr tree(new pcl::search::KdTree<PointT>());
   ne.setSearchMethod(tree);
   ne.setRadiusSearch(0.1);
+  auto normals = pcl::PointCloud<pcl::Normal>::Ptr(new pcl::PointCloud<pcl::Normal>());
   ne.compute(*normals);
 
+  // 2) FPFH
   pcl::FPFHEstimation<PointT, pcl::Normal, DescriptorT> fpfh;
-  DescriptorCloudT::Ptr descriptors(new DescriptorCloudT);
   fpfh.setInputCloud(keypoints);
   fpfh.setInputNormals(normals);
   fpfh.setSearchSurface(surface);
   fpfh.setSearchMethod(tree);
   fpfh.setRadiusSearch(0.2);
-  fpfh.compute(*descriptors);
 
+  DescriptorPtr descriptors(new DescriptorCloudT());
+  fpfh.compute(*descriptors);
   return descriptors;
 }
 
-pcl::PointCloud<PointT>::Ptr CloudMergerNode::alignClouds(const PointCloudT::Ptr & source,
-                                                          const PointCloudT::Ptr & target,
-                                                          const DescriptorCloudT::Ptr & source_desc,
-                                                          const DescriptorCloudT::Ptr & target_desc,
-                                                          const PointCloudT::Ptr & source_kp,
-                                                          const PointCloudT::Ptr & target_kp)
+PointCloudPtr CloudMergerNode::alignClouds(
+  const PointCloudPtr &source,
+  const PointCloudPtr &target)
 {
+  // A) ключевые точки + дескрипторы «на лету»
+  auto sk = extractKeypoints(source);
+  auto tk = extractKeypoints(target);
+  auto sd = computeDescriptors(sk, source);
+  auto td = computeDescriptors(tk, target);
+
+  // B) RANSAC-выравнивание
   pcl::SampleConsensusPrerejective<PointT, PointT, DescriptorT> align;
-  align.setInputSource(source_kp);
-  align.setSourceFeatures(source_desc);
-  align.setInputTarget(target_kp);
-  align.setTargetFeatures(target_desc);
+  align.setInputSource(sk);
+  align.setSourceFeatures(sd);
+  align.setInputTarget(tk);
+  align.setTargetFeatures(td);
   align.setMaximumIterations(50000);
   align.setNumberOfSamples(3);
   align.setCorrespondenceRandomness(5);
@@ -169,17 +211,20 @@ pcl::PointCloud<PointT>::Ptr CloudMergerNode::alignClouds(const PointCloudT::Ptr
   align.setMaxCorrespondenceDistance(2.5f * voxel_leaf_size_);
   align.setInlierFraction(0.25f);
 
-  PointCloudT::Ptr aligned(new PointCloudT());
+  PointCloudPtr aligned(new PointCloudT());
   align.align(*aligned);
-
   if (!align.hasConverged()) {
-    RCLCPP_WARN(this->get_logger(), "Alignment failed");
+    RCLCPP_WARN(get_logger(), "pairwise alignment failed");
     return source;
   }
 
-  PointCloudT::Ptr merged(new PointCloudT());
-  pcl::transformPointCloud(*source, *aligned, align.getFinalTransformation());
-  *merged = *aligned + *target;
+  // C) трансформируем исходное облако и склеиваем
+  pcl::PointCloud<PointT> tmp;
+  pcl::transformPointCloud(*source, tmp, align.getFinalTransformation());
+
+  PointCloudPtr merged(new PointCloudT());
+  *merged = tmp;
+  *merged += *target;
   return merged;
 }
 

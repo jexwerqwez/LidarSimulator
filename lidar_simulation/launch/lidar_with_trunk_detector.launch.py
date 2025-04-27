@@ -11,10 +11,11 @@ def ensure_cloud_directory(context, *args, **kwargs):
     return []
 
 def generate_launch_description():
-    # Конфиги
-    lidar_params = os.path.join(get_package_share_directory('lidar_simulation'), 'config', 'lidar_params.yaml')
-    detector_params = os.path.join(get_package_share_directory('trunk_detector'), 'config', 'trunk_detector_param.yaml')
-    rviz_config = os.path.join(get_package_share_directory('trunk_detector'), 'rviz', 'default_config.rviz')
+    # пути до конфигов
+    pkg_share = get_package_share_directory('lidar_simulation')
+    multi_lidar_config = os.path.join(pkg_share, 'config', 'multi_lidar_simulation.yaml')
+    detector_params   = os.path.join(get_package_share_directory('trunk_detector'), 'config', 'trunk_detector_param.yaml')
+    rviz_config       = os.path.join(pkg_share, 'rviz', 'default_config.rviz')
     merger_params = os.path.join(get_package_share_directory('cloud_merger'), 'config', 'merger_params.yaml')
 
     cloud_dir_arg = DeclareLaunchArgument(
@@ -30,10 +31,12 @@ def generate_launch_description():
 
         Node(
             package='lidar_simulation',
-            executable='lidar_simulation_node',
-            name='lidar_simulation_node',
+            executable='multi_lidar_simulator',
+            name='multi_lidar_simulator',
             output='screen',
-            parameters=[lidar_params]
+            parameters=[{
+                'config_file': multi_lidar_config
+            }]
         ),
 
         Node(
@@ -44,7 +47,7 @@ def generate_launch_description():
             parameters=[
                 detector_params,
                 {
-                    'input_pointclouds_topic': 'lidar/point_cloud',
+                    'input_pointclouds_topic': '/merged_cloud',
                     'output_pointclouds_topic': '/detector_output'
                 }
             ]
@@ -62,16 +65,12 @@ def generate_launch_description():
         ),
 
         Node(
-            package='cloud_replayer',
-            executable='cloud_replayer_main',
-            name='cloud_replayer_node',
+            package='rviz2',
+            executable='rviz2',
+            name='rviz2',
             output='screen',
-            parameters=[{
-                'cloud_directory': cloud_dir,
-                'replay_rate': 1.0
-            }]
+            arguments=['-d', rviz_config]
         ),
-
         Node(
             package='cloud_merger',
             executable='cloud_merger_main',

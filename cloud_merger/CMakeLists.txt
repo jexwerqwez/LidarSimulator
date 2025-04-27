@@ -1,7 +1,7 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.16)
 project(cloud_merger)
 
-# ROS 2 и PCL зависимости
+# --- найти зависимости ---
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
@@ -9,51 +9,58 @@ find_package(pcl_conversions REQUIRED)
 find_package(pcl_ros REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(visualization_msgs REQUIRED)
-find_package(tf2 REQUIRED)
-find_package(std_srvs REQUIRED)
+find_package(PCL REQUIRED COMPONENTS common io filters features registration)
+find_package(tf2_sensor_msgs REQUIRED)
 
-# Включаем include директории
+# --- включить заголовочные директории ---
 include_directories(
   include
   ${PCL_INCLUDE_DIRS}
 )
+link_directories(${PCL_LIBRARY_DIRS})
 
-# Либра с реализацией узла
-add_library(${PROJECT_NAME}_node
+# --- библиотека с реализацией узла ---
+add_library(cloud_merger_node
   src/cloud_merger_node.cpp
 )
-
-ament_target_dependencies(${PROJECT_NAME}_node
-  rclcpp 
-  sensor_msgs 
-  pcl_conversions 
-  pcl_ros 
-  tf2_ros 
+ament_target_dependencies(cloud_merger_node
+  rclcpp
+  sensor_msgs
+  pcl_conversions
+  pcl_ros
+  tf2_ros
+  tf2_sensor_msgs
   geometry_msgs
-  visualization_msgs
-  std_srvs
 )
-target_link_libraries(${PROJECT_NAME}_node ${PCL_LIBRARIES})
+target_link_libraries(cloud_merger_node
+  ${PCL_LIBRARIES}
+)
 
-# Main (точка входа)
-add_executable(cloud_merger_main src/cloud_merger_main.cpp)
-target_link_libraries(cloud_merger_main ${PROJECT_NAME}_node)
+# --- основной исполняемый файл ---
+add_executable(cloud_merger_main
+  src/cloud_merger_main.cpp
+)
 ament_target_dependencies(cloud_merger_main
   rclcpp
 )
-
-# Установка бинарников
-install(TARGETS
-  ${PROJECT_NAME}_node
-  cloud_merger_main
-  DESTINATION lib/${PROJECT_NAME}
+target_link_libraries(cloud_merger_main
+  cloud_merger_node
 )
 
-# Установка ресурсов
-install(DIRECTORY
-  launch
-  config
+# --- установка ---
+install(
+  TARGETS
+    cloud_merger_node
+    cloud_merger_main
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
+  LIBRARY DESTINATION lib/${PROJECT_NAME}
+  ARCHIVE DESTINATION lib/${PROJECT_NAME}
+)
+
+install(
+  DIRECTORY
+    launch
+    config
   DESTINATION share/${PROJECT_NAME}
 )
 

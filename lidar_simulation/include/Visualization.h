@@ -1,34 +1,25 @@
-#ifndef VISUALIZATION_H
-#define VISUALIZATION_H
-
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
+#pragma once
 
 #include <rclcpp/rclcpp.hpp>
-#include <sensor_msgs/msg/point_cloud2.hpp>
 #include <visualization_msgs/msg/marker.hpp>
-
 #include "Objects/Object.h"
-#include "Objects/Plane.h"
+#include "Position3D.h"
 
-class Visualization {
- public:
-  Visualization(rclcpp::Node::SharedPtr node);
+class Visualization
+{
+public:
+  explicit Visualization(rclcpp::Node * node,
+                         const std::string & marker_topic = "visualization_marker");
 
-  void publishPointCloud(const pcl::PointCloud<pcl::PointXYZI>::Ptr &cloud,
-                                      const pcl::PointCloud<pcl::PointXYZI>::Ptr &noisy_cloud);
-  void publishMarkers(const std::vector<std::shared_ptr<Object>> &objects);
-  void publishRay(const Eigen::Vector3d &start, const Eigen::Vector3d &end,
-                                const std::string &ns, double width,
-                                const std::array<float, 4> &color);
-  void publishPlane(const Plane &plane, const std::string &ns,
-                                  const std::array<float, 4> &color);
-  void publishLidarMarker(const Position3D &position);
+  /// Публикует маркеры для всех объектов (в глобальной системе «map»)
+  void publishSceneMarkers(const std::vector<std::shared_ptr<Object>> & objects);
 
- private:
-  rclcpp::Node::SharedPtr node_;
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr point_cloud_pub_;
+  /// Публикует небольшой маркер положения ЛиДАРа
+  void publishLidarPose(const Position3D & pose,
+                        const std::string & ns,
+                        int id = 0);
+
+private:
+  rclcpp::Node * node_;
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr marker_pub_;
 };
-
-#endif  // VISUALIZATION_H

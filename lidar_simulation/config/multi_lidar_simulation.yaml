@@ -1,0 +1,33 @@
+# в папке config/multi_lidar_simulation.yaml
+lidars:
+  - name: "front_lidar"
+    topic: "/lidar/front/points"
+    pose:
+      x: 0.0
+      y: 0.0
+      z: 1.0
+      roll: 0.0
+      pitch: 0.0
+      yaw: 0.0
+    height: 1.0
+    num_lasers: 32
+    alpha_begin: -30.0
+    alpha_end: 30.0
+    laser_range: 25.0
+    horizontal_step: 0.0174533
+
+  - name: "rear_lidar"
+    topic: "/lidar/rear/points"
+    pose:
+      x: -2.0
+      y: 0.0
+      z: 1.0
+      roll: 0.0
+      pitch: 0.0
+      yaw: 0.0
+    height: 1.0
+    num_lasers: 32
+    alpha_begin: -30.0
+    alpha_end: 30.0
+    laser_range: 20.0
+    horizontal_step: 0.0174533

@@ -12,39 +12,64 @@ find_package(geometry_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(std_srvs REQUIRED)
-
+# YAML-парсер
+find_package(yaml-cpp REQUIRED)
 # Добавление директорий заголовочных файлов
 include_directories(
   ${PROJECT_SOURCE_DIR}/include
+  ${YAML_CPP_INCLUDE_DIRS}
 )
 
-# Создание общей библиотеки
+# ------------------------------------------------------------
+# 1) Сборка общей библиотеки lidar_simulation_library:
+#    в ней лежат Plane, Sphere, Cylinder, Lidar, Visualization
+# ------------------------------------------------------------
 add_library(lidar_simulation_library
   src/Objects/Plane.cpp
   src/Objects/Sphere.cpp
   src/Objects/Cylinder.cpp
   src/Lidar.cpp
   src/Visualization.cpp
-  src/LidarController.cpp
 )
 
 # Линковка зависимостей для библиотеки
 ament_target_dependencies(lidar_simulation_library
-  rclcpp 
-  sensor_msgs 
-  pcl_conversions 
-  pcl_ros 
-  tf2_ros 
+  rclcpp
+  sensor_msgs
+  pcl_conversions
+  pcl_ros
+  tf2_ros
   geometry_msgs
   visualization_msgs
   std_srvs
+  yaml-cpp
 )
 
-add_executable(${PROJECT_NAME}_node src/Main.cpp)
-target_link_libraries(${PROJECT_NAME}_node lidar_simulation_library)
+# ------------------------------------------------------------
+# 2) Собираем исполняемый узел multi_lidar_simulator
+# ------------------------------------------------------------
+add_executable(multi_lidar_simulator
+  src/multi_lidar_node.cpp
+  src/MultiLidarSimulatorNode.cpp
+)
 
+target_link_libraries(multi_lidar_simulator
+  lidar_simulation_library
+  ${YAML_CPP_LIBRARIES}
+)
 
-find_package(GTest REQUIRED)
+ament_target_dependencies(multi_lidar_simulator
+  rclcpp
+  sensor_msgs
+  pcl_conversions
+  pcl_ros
+  tf2_ros
+  geometry_msgs
+  visualization_msgs
+  yaml-cpp
+)
+
+# find_package(GTest REQUIRED)
 
 # add_executable(tests
 #   test/TestMain.cpp
@@ -63,20 +88,19 @@ find_package(GTest REQUIRED)
 
 # target_link_libraries(tests lidar_simulation_library GTest::GTest GTest::Main)
 
-# Установка файлов
-install(TARGETS
-  lidar_simulation_library
-  ${PROJECT_NAME}_node
+# ------------------------------------------------------------
+# 3) Установка
+# ------------------------------------------------------------
+install(
+  TARGETS
+    lidar_simulation_library
+    multi_lidar_simulator
   DESTINATION lib/${PROJECT_NAME}
 )
 
-# Установка launch-файлов
-install(DIRECTORY
-  launch
+install(
+  DIRECTORY launch config
   DESTINATION share/${PROJECT_NAME}
 )
 
-set(CMAKE_PROJECT_NAME lidar_simulation)
-
-# Упаковка для ROS 2
 ament_package()
