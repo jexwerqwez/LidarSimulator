@@ -1,18 +1,9 @@
 trunk_detector_node:
   ros__parameters:
-    v_shift: 0.0
-    v_delta: 1.0
-    cluster_tolerance: 0.5
-    cluster_max_size: 200.0
-    cluster_min_size: 0.5
-    max_angle_deg: 60.0
-    slices_number: 3.0
-    empty_radius: 0.0 
+    input_topic: /merged_cloud
+    output_topic: /detector_output
 
-    small_trunk_hight: 0.1
-    medium_trunk_hight: 0.5
-    map_size: 100.0
-    cell_size: 0.2
-    update_rate: 10.0
-    input_pointclouds_topic: /lidar/point_cloud
-    output_pointclouds_topic: /detector_output
+    grid_size: 0.4               # Размер ячейки 2D-сетки, м
+    height_threshold: 0.03        # Порог высоты объекта, м (если z_max - z_min > порог, то это препятствие)
+    min_intensity: 0.00          # Отбрасывать шумовые точки по интенсивности
+    max_distance: 40.0           # Радиус обработки, м

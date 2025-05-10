@@ -4,11 +4,14 @@
 
 class TrunkMarkerVisualizer : public rclcpp::Node {
 public:
-  TrunkMarkerVisualizer() : Node("trunk_marker_visualizer_node") {
-    this->declare_parameter("input_topic", "/detector_output");
-    this->declare_parameter("output_topic", "/trunk_markers");
-    std::string input_topic = this->get_parameter("input_topic").as_string();
-    std::string output_topic = this->get_parameter("output_topic").as_string();
+  TrunkMarkerVisualizer()
+  : Node("trunk_marker_visualizer_node")
+  {
+    this->declare_parameter<std::string>("input_topic", "/detector_output");
+    this->declare_parameter<std::string>("output_topic", "/trunk_markers");
+
+    auto input_topic  = this->get_parameter("input_topic").as_string();
+    auto output_topic = this->get_parameter("output_topic").as_string();
 
     sub_ = this->create_subscription<trunk_detector_msgs::msg::TrunkPoseArray>(
       input_topic, 10,
@@ -18,76 +21,50 @@ public:
   }
 
 private:
-  void callback(const trunk_detector_msgs::msg::TrunkPoseArray::SharedPtr msg) {
-    visualization_msgs::msg::MarkerArray marker_array;
-
+  void callback(const trunk_detector_msgs::msg::TrunkPoseArray::SharedPtr msg)
+  {
+    visualization_msgs::msg::MarkerArray ma;
     int id = 0;
-    for (const auto& trunk : msg->trunks) {
+
+    for (const auto &t : msg->trunks)
+    {
       visualization_msgs::msg::Marker marker;
       marker.header = msg->header;
-      marker.ns = "trunks";
-      marker.id = id++;
-      marker.type = visualization_msgs::msg::Marker::CYLINDER;
+      marker.ns     = "trunk";
+      marker.id     = id++;
+      marker.type   = visualization_msgs::msg::Marker::CYLINDER;
       marker.action = visualization_msgs::msg::Marker::ADD;
 
-      marker.pose.position.x = trunk.x;
-      marker.pose.position.y = trunk.y;
-      marker.pose.position.z = 0.5;  // Высота центра цилиндра
-
+      // Позиция и ориентация
+      marker.pose.position.x = t.x;
+      marker.pose.position.y = t.y;
+      marker.pose.position.z = 0.5;
       marker.pose.orientation.w = 1.0;
 
-      // Минимальный радиус для отображения
-      double radius = std::abs(trunk.r);
-      if (radius < 0.05) {
-        radius = 0.05;
-      }
-
-      marker.scale.x = std::abs(2.0 * radius);
-      marker.scale.y = std::abs(2.0 * radius);
+      // Радиус — фиксированный или от r
+      double radius = std::max(0.05, std::abs(t.r));
+      marker.scale.x = 2.0 * radius;
+      marker.scale.y = 2.0 * radius;
       marker.scale.z = 1.0;
 
-      // Цвет по категории
-      switch (trunk.c) {
-        case 0: // none
-          marker.color.r = 0.5;
-          marker.color.g = 0.5;
-          marker.color.b = 0.5;
-          break;
-        case 1: // small
-          marker.color.r = 0.2;
-          marker.color.g = 1.0;
-          marker.color.b = 0.2;
-          break;
-        case 2: // medium
-          marker.color.r = 1.0;
-          marker.color.g = 1.0;
-          marker.color.b = 0.2;
-          break;
-        case 3: // big
-          marker.color.r = 1.0;
-          marker.color.g = 0.2;
-          marker.color.b = 0.2;
-          break;
-        default:
-          marker.color.r = 1.0;
-          marker.color.g = 1.0;
-          marker.color.b = 1.0;
-      }
-
+      // Цвет — один для всех
+      marker.color.r = 1.0;
+      marker.color.g = 0.5;
+      marker.color.b = 0.0;
       marker.color.a = 0.8;
-      marker.lifetime = rclcpp::Duration::from_seconds(0.5);
 
-      marker_array.markers.push_back(marker);
+      marker.lifetime = rclcpp::Duration::from_seconds(0.0);
+      ma.markers.push_back(marker);
     }
 
-    pub_->publish(marker_array);
+    pub_->publish(ma);
   }
 
   rclcpp::Subscription<trunk_detector_msgs::msg::TrunkPoseArray>::SharedPtr sub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_;
 };
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<TrunkMarkerVisualizer>());
   rclcpp::shutdown();

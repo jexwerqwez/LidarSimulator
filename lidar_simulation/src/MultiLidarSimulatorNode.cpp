@@ -24,7 +24,7 @@ MultiLidarSimulatorNode::MultiLidarSimulatorNode(const rclcpp::NodeOptions & opt
   objects_.push_back(std::make_shared<Cylinder>(Position3D{2,2,0, 0,0,0}, 1.0, 1.0));
 
   // 3) сразу отрисуем сцену и положение лидаров
-  visualization_ = std::make_unique<Visualization>(this);
+  visualization_ = std::make_unique<Visualization>(this, "/scene_objects");
   visualization_->publishSceneMarkers(objects_);
 
   // 4) Создаём каждый Lidar через единый конструктор

@@ -27,7 +27,6 @@ include_directories(
 add_executable(trunk_detector_node
   src/trunk_detector_node.cpp
   src/trunk_detector.cpp
-  src/trunk_finder.cpp
 )
 
 # Подключение зависимостей для целевого файла
