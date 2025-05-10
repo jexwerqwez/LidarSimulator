@@ -1,9 +1,0 @@
-cloud_replayer_node:
-  ros__parameters:
-    cloud_directory: "/home/username/ros2_ws/clouds"  # Путь к папке с PCD-файлами
-    publish_rate: 1.0  # Частота публикации облаков (в секундах)
-    frame_id: "lidar_frame"  # Имя системы координат
-    topic_name: "/cloud_replay"  # Тема публикации
-    input_file_1: "/tmp/lidar_clouds/cloud1.pcd"
-    input_file_2: "/tmp/lidar_clouds/cloud_2.pcd"
-    replay_rate: 1.0

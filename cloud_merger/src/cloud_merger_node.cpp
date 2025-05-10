@@ -73,6 +73,8 @@ void CloudMergerNode::cloudCallback(
   // преобразуем ROS → PCL
   PointCloudT::Ptr pc(new PointCloudT());
   pcl::fromROSMsg(*msg, *pc);
+  RCLCPP_INFO(this->get_logger(), "cloud[%zu] received with %lu points. Sample intensity: %.2f",
+            idx, pc->size(), pc->points[0].intensity);
   clouds_[idx]  = pc;
   received_[idx] = true;
 }
