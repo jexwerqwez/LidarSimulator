@@ -3,6 +3,9 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_srvs/srv/trigger.hpp>
+#include <pcl/ModelCoefficients.h>
+#include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/filters/extract_indices.h>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -41,6 +44,7 @@ private:
                                    const PointCloudPtr &surface);
   PointCloudPtr alignClouds(const PointCloudPtr &source,
                             const PointCloudPtr &target);
+  PointCloudPtr removeGroundPlane(const PointCloudPtr &cloud);
     
   // параметры
   std::vector<std::string> input_topics_;

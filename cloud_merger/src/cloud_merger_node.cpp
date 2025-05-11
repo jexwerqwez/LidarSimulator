@@ -66,6 +66,37 @@ CloudMergerNode::CloudMergerNode(const rclcpp::NodeOptions& options)
   );
 }
 
+PointCloudPtr CloudMergerNode::removeGroundPlane(const PointCloudPtr &cloud)
+{
+  pcl::SACSegmentation<PointT> seg;
+  seg.setOptimizeCoefficients(true);
+  seg.setModelType(pcl::SACMODEL_PLANE);
+  seg.setMethodType(pcl::SAC_RANSAC);
+  seg.setDistanceThreshold(0.05);  // допуск в метрах до плоскости
+
+  pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients());
+  pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
+
+  seg.setInputCloud(cloud);
+  seg.segment(*inliers, *coefficients);
+
+  if (inliers->indices.empty()) {
+    RCLCPP_WARN(get_logger(), "Ground plane not found");
+    return cloud;
+  }
+
+  // Удаляем точки, принадлежащие плоскости
+  pcl::ExtractIndices<PointT> extract;
+  PointCloudPtr filtered(new PointCloudT());
+  extract.setInputCloud(cloud);
+  extract.setIndices(inliers);
+  extract.setNegative(true);  // оставить всё КРОМЕ пола
+  extract.filter(*filtered);
+
+  return filtered;
+}
+
+
 void CloudMergerNode::cloudCallback(
   size_t idx,
   sensor_msgs::msg::PointCloud2::SharedPtr msg)
@@ -112,19 +143,22 @@ PointCloudT::Ptr CloudMergerNode::mergeAll(const std::vector<PointCloudPtr> &clo
   }
 
   // 1) воксельная фильтрация ко всем облакам
-  std::vector<PointCloudPtr> filtered;
-  filtered.reserve(clouds.size());
+  std::vector<PointCloudPtr> filtered_clouds;
+  filtered_clouds.reserve(clouds.size());
+
   for (auto &c : clouds) {
     if (c && !c->empty()) {
-      filtered.push_back(applyVoxelFilter(c));
+      auto filtered = applyVoxelFilter(c);
+      filtered = removeGroundPlane(filtered);  // Удаляем пол
+      filtered_clouds.push_back(filtered);
     }
   }
-  if (filtered.empty()) {
+  if (filtered_clouds.empty()) {
     return PointCloudPtr(new PointCloudT());
   }
 
   // начинаем с копии первого
-  PointCloudPtr merged(new PointCloudT(*filtered[0]));
+  PointCloudPtr merged(new PointCloudT(*filtered_clouds[0]));
 
   // итеративно выравниваем и склеиваем
   // for (size_t i = 1; i < filtered.size(); ++i) {
