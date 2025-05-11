@@ -17,24 +17,13 @@ source install/setup.bash
 
 ## Сборка и запуск
 
-**Терминал №1**
-
 Сборка:
 ```
-colcon build --packages-select lidar_simulation
+colcon build
 ```
 
 Публикация:
 
 ```
-ros2 run lidar_simulation lidar_simulation_node --ros-args -p num_circles:=10 -p lidar_height:=1.0
-```
-
-
-**Терминал №2**
-
-Запуск rviz2:
-
-```
-rviz2
+ros2 launch lidar_simulation lidar_with_trunk_detector.launch.py
 ```
