@@ -10,7 +10,7 @@ bool Plane::intersects(const Eigen::Vector3d &ray_origin,
                        const Eigen::Vector3d &ray_direction, double max_range,
                        Point3D &intersection_point) const {
   Eigen::Vector3d normal =
-      position_.orientation.toRotationMatrix() * Eigen::Vector3d::UnitY();
+      position_.orientation.toRotationMatrix() * Eigen::Vector3d::UnitZ();
 
   // std::cout << "Ray Origin: " << ray_origin.transpose() << std::endl;
   // std::cout << "Ray Direction: " << ray_direction.transpose() << std::endl;
@@ -40,7 +40,7 @@ bool Plane::intersects(const Eigen::Vector3d &ray_origin,
       (P - Eigen::Vector3d(position_.position.x, position_.position.y,
                            position_.position.z));
   if (std::abs(local.x()) > width_ / 2.0 ||
-      std::abs(local.z()) > height_ / 2.0) {
+      std::abs(local.y()) > height_ / 2.0) {
     return false;
   }
 
@@ -74,8 +74,8 @@ visualization_msgs::msg::Marker Plane::getMarker(int id) const {
   marker.pose.orientation.w = position_.orientation.w();
 
   marker.scale.x = width_;
-  marker.scale.y = 0.01;
-  marker.scale.z = height_;
+  marker.scale.z = 0.01;
+  marker.scale.y = height_;
 
   marker.color.r = 0.0f;
   marker.color.g = 0.0f;

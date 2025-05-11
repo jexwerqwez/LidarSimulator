@@ -11,8 +11,8 @@ lidars:
       yaw: 0.0
     height: 1.0
     num_lasers: 32
-    alpha_begin: -30.0
-    alpha_end: 30.0
+    alpha_begin: -60.0
+    alpha_end: 60.0
     laser_range: 25.0
     horizontal_step: 0.0174533
 
@@ -27,7 +27,7 @@ lidars:
       yaw: 0.0
     height: 1.0
     num_lasers: 32
-    alpha_begin: -30.0
-    alpha_end: 30.0
+    alpha_begin: -60.0
+    alpha_end: 60.0
     laser_range: 20.0
     horizontal_step: 0.0174533
