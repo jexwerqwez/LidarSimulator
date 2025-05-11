@@ -41,15 +41,16 @@ private:
       marker.pose.position.z = 0.5;
       marker.pose.orientation.w = 1.0;
 
-      // Радиус — фиксированный или от r
+      // Размер цилиндра
       double radius = std::max(0.05, std::abs(t.r));
-      marker.scale.x = 2.0 * radius;
-      marker.scale.y = 2.0 * radius;
+      marker.scale.x = 1.0 * radius;
+      marker.scale.y = 1.0 * radius;
       marker.scale.z = 1.0;
 
-      // Цвет — один для всех
-      marker.color.r = 1.0;
-      marker.color.g = 0.5;
+      // Цвет по градации от зелёного к красному
+      double r_norm = std::min(1.0, t.r / 1.0);  // ожидается r ∈ [0,1]
+      marker.color.r = r_norm;
+      marker.color.g = 1.0 - r_norm;
       marker.color.b = 0.0;
       marker.color.a = 0.8;
 
@@ -59,6 +60,7 @@ private:
 
     pub_->publish(ma);
   }
+
 
   rclcpp::Subscription<trunk_detector_msgs::msg::TrunkPoseArray>::SharedPtr sub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_;
