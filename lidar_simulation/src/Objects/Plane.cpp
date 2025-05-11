@@ -58,7 +58,7 @@ void Plane::setPosition(const Position3D &position) { position_ = position; }
 
 visualization_msgs::msg::Marker Plane::getMarker(int id) const {
   visualization_msgs::msg::Marker marker;
-  marker.header.frame_id = "lidar_frame";
+  marker.header.frame_id = "map";
   marker.header.stamp = rclcpp::Clock().now();
   marker.ns = "planes";
   marker.id = id;

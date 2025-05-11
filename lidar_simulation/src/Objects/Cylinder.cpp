@@ -54,7 +54,7 @@ void Cylinder::setPosition(const Position3D &position) { position_ = position; }
 
 visualization_msgs::msg::Marker Cylinder::getMarker(int id) const {
   visualization_msgs::msg::Marker marker;
-  marker.header.frame_id = "lidar_frame";
+  marker.header.frame_id = "map";
   marker.header.stamp = rclcpp::Clock().now();
   marker.ns = "cylinders";
   marker.id = id;
@@ -80,7 +80,7 @@ visualization_msgs::msg::Marker Cylinder::getMarker(int id) const {
   marker.color.b = 0.0f;
   marker.color.a = 0.8f;
 
-  marker.lifetime = rclcpp::Duration::from_seconds(0.5);
+  // marker.lifetime = rclcpp::Duration::from_seconds(0.5);
 
   return marker;
 }

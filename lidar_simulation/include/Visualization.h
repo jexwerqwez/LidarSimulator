@@ -2,6 +2,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <visualization_msgs/msg/marker.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 #include "Objects/Object.h"
 #include "Position3D.h"
 
@@ -21,5 +22,6 @@ public:
 
 private:
   rclcpp::Node * node_;
-  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr marker_pub_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr marker_pub_;
+
 };

@@ -35,6 +35,7 @@ public:
   private:
   void loadConfig(const std::string & yaml_path);
   void onTimer();
+  void publishSceneMarkersTimer();
 
   // конфиги и объекты сцены
   std::vector<LidarConfig> configs_;
@@ -48,6 +49,7 @@ public:
   std::unique_ptr<Visualization> visualization_;
 
   rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::TimerBase::SharedPtr marker_timer_;
 };
 
 }  // namespace multi_lidar_sim

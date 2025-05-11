@@ -43,7 +43,7 @@ void Sphere::setPosition(const Position3D &position) { position_ = position; }
 
 visualization_msgs::msg::Marker Sphere::getMarker(int id) const {
   visualization_msgs::msg::Marker marker;
-  marker.header.frame_id = "lidar_frame";
+  marker.header.frame_id = "map";
   marker.header.stamp = rclcpp::Clock().now();
   marker.ns = "spheres";
   marker.id = id;
@@ -65,7 +65,7 @@ visualization_msgs::msg::Marker Sphere::getMarker(int id) const {
   marker.color.r = 1.0f;
   marker.color.g = 0.0f;
   marker.color.b = 0.0f;
-  marker.color.a = 0.8f;
+  marker.color.a = 0.5f;
 
   return marker;
 }

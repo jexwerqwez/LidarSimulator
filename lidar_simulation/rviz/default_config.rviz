@@ -15,6 +15,11 @@ Visualization Manager:
       Color Transformer: intensity
       Size (Pixels): 2
 
+    - Name: Scene Objects
+      Class: rviz_default_plugins/MarkerArray
+      Topic: /scene_objects
+      Enabled: true
+
   Global Options:
     Fixed Frame: map
 

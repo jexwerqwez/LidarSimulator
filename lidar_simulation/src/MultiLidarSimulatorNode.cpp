@@ -13,11 +13,21 @@ MultiLidarSimulatorNode::MultiLidarSimulatorNode(const rclcpp::NodeOptions & opt
   this->get_parameter("config_file", cfg_file);
   loadConfig(cfg_file);
 
-  // 2) создаём сцену
-  // {
-  //   Position3D p{0,0,0, 1,0,0};
-  //   objects_.push_back(std::make_shared<Plane>(p, 10.0, 10.0));
+  // // 2) создаём неровный пол из нескольких плиток
+  // for (int i = -1; i <= 1; ++i) {
+  //   for (int j = -1; j <= 1; ++j) {
+  //     double z_offset = 0.05 * ((i + j) % 3 - 1);  // ±5 см высота
+
+  //     Position3D pos;
+  //     pos.position.x = i * 5.0;
+  //     pos.position.y = j * 5.0;
+  //     pos.position.z = z_offset;
+  //     pos.orientation = Eigen::Quaterniond::Identity();  // горизонтальная плоскость
+
+  //     objects_.push_back(std::make_shared<Plane>(pos, 5.5, 5.5));
+  //   }
   // }
+
   objects_.push_back(std::make_shared<Sphere>(Position3D{3.0, 0.0, 1.0, 0.0, 0.0, 0.0}, 1.0));
   objects_.push_back(std::make_shared<Sphere>(Position3D{-2.0, 2.0, 0.5, 0.0, 0.0, 0.0}, 0.8));
   objects_.push_back(std::make_shared<Sphere>(Position3D{-3.0, -1.0, -1.0, 0.0, 0.0, 0.0}, 0.2));
@@ -25,6 +35,7 @@ MultiLidarSimulatorNode::MultiLidarSimulatorNode(const rclcpp::NodeOptions & opt
 
   // 3) сразу отрисуем сцену и положение лидаров
   visualization_ = std::make_unique<Visualization>(this, "/scene_objects");
+  RCLCPP_INFO(this->get_logger(), "Publishing %zu scene objects", objects_.size());
   visualization_->publishSceneMarkers(objects_);
 
   // 4) Создаём каждый Lidar через единый конструктор
@@ -59,7 +70,17 @@ MultiLidarSimulatorNode::MultiLidarSimulatorNode(const rclcpp::NodeOptions & opt
 
   // 5) запускаем таймер на публикацию облаков
   timer_ = this->create_wall_timer(100ms, std::bind(&MultiLidarSimulatorNode::onTimer, this));
+// запуск таймера для публикации маркеров объектов
+  marker_timer_ = this->create_wall_timer(
+    500ms, std::bind(&MultiLidarSimulatorNode::publishSceneMarkersTimer, this));
+
 }
+
+void MultiLidarSimulatorNode::publishSceneMarkersTimer()
+{
+  visualization_->publishSceneMarkers(objects_);
+}
+
 
 void MultiLidarSimulatorNode::onTimer()
 {
