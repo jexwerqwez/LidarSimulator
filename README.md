@@ -27,3 +27,11 @@ colcon build
 ```
 ros2 launch lidar_simulation lidar_with_trunk_detector.launch.py
 ```
+
+## Управление
+
+В отдельном терминале запустить:
+
+```
+ros2 topic pub /lidar_control geometry_msgs/msg/Twist '{linear: {x: 0.2, y: 0.0, z: 0.0}}'
+```

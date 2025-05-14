@@ -46,7 +46,19 @@ ament_target_dependencies(lidar_simulation_library
 )
 
 # ------------------------------------------------------------
-# 2) Собираем исполняемый узел multi_lidar_simulator
+# 2) Собираем узел зел управления движением лидара
+# ------------------------------------------------------------
+add_executable(lidar_control_node
+  src/LidarKeyboardController.cpp
+)
+
+ament_target_dependencies(lidar_control_node
+  rclcpp
+  geometry_msgs
+)
+
+# ------------------------------------------------------------
+# 3) Собираем исполняемый узел multi_lidar_simulator
 # ------------------------------------------------------------
 add_executable(multi_lidar_simulator
   src/multi_lidar_node.cpp
@@ -89,12 +101,13 @@ ament_target_dependencies(multi_lidar_simulator
 # target_link_libraries(tests lidar_simulation_library GTest::GTest GTest::Main)
 
 # ------------------------------------------------------------
-# 3) Установка
+# 4) Установка
 # ------------------------------------------------------------
 install(
   TARGETS
     lidar_simulation_library
     multi_lidar_simulator
+    lidar_control_node
   DESTINATION lib/${PROJECT_NAME}
 )
 

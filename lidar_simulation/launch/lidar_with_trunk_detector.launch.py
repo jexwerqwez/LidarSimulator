@@ -77,5 +77,13 @@ def generate_launch_description():
             name='cloud_merger_node',
             output='screen',
             parameters=[merger_params]
+        ),
+        Node(
+            package='teleop_twist_keyboard',
+            executable='teleop_twist_keyboard',
+            name='teleop_twist_keyboard',
+            output='screen',
+            prefix='xterm -e',  # чтобы запустить в новом окне терминала
         )
+
     ])

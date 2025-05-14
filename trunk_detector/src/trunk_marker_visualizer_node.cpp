@@ -47,10 +47,11 @@ private:
       marker.scale.y = 1.0 * radius;
       marker.scale.z = 1.0;
 
-      // Цвет по градации от зелёного к красному
-      double r_norm = std::min(1.0, t.r / 1.0);  // ожидается r ∈ [0,1]
-      marker.color.r = r_norm;
-      marker.color.g = 1.0 - r_norm;
+      // градация по цвету
+      double max_height = 2.0;
+      double norm = std::clamp(t.h / max_height, 0.0, 1.0);
+      marker.color.r = norm;
+      marker.color.g = 1.0 - norm;
       marker.color.b = 0.0;
       marker.color.a = 0.8;
 

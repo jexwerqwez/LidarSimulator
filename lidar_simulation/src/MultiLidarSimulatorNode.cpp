@@ -1,4 +1,5 @@
 #include "MultiLidarSimulatorNode.h"
+#include <geometry_msgs/msg/twist.hpp>
 using namespace std::chrono_literals;
 
 namespace multi_lidar_sim
@@ -33,7 +34,7 @@ MultiLidarSimulatorNode::MultiLidarSimulatorNode(const rclcpp::NodeOptions & opt
       objects_.push_back(std::make_shared<Plane>(pos, 3.2, 3.2));
     }
   }
-
+  objects_.push_back(std::make_shared<Sphere>(Position3D{1.0, 0.0, 0.0, 0.0, 0.0, 0.0}, 0.2));
   objects_.push_back(std::make_shared<Sphere>(Position3D{3.0, 0.0, 1.0, 0.0, 0.0, 0.0}, 1.0));
   objects_.push_back(std::make_shared<Sphere>(Position3D{-2.0, 2.0, 0.5, 0.0, 0.0, 0.0}, 0.8));
   objects_.push_back(std::make_shared<Sphere>(Position3D{-3.0, -1.0, -1.0, 0.0, 0.0, 0.0}, 0.2));
@@ -75,6 +76,16 @@ MultiLidarSimulatorNode::MultiLidarSimulatorNode(const rclcpp::NodeOptions & opt
     visualization_->publishLidarPose(cfg.pose, cfg.name, static_cast<int>(i));
   }
 
+  lidar_control_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
+    "/lidar_control", 10,
+    [this](const geometry_msgs::msg::Twist::SharedPtr msg) {
+      auto &pos = configs_[0].pose.position;
+      pos.x += msg->linear.x;
+      pos.y += msg->linear.y;
+      lidars_[0]->setPosition(configs_[0].pose);
+    });
+  
+
   // 5) запускаем таймер на публикацию облаков
   timer_ = this->create_wall_timer(100ms, std::bind(&MultiLidarSimulatorNode::onTimer, this));
 // запуск таймера для публикации маркеров объектов
@@ -83,14 +94,12 @@ MultiLidarSimulatorNode::MultiLidarSimulatorNode(const rclcpp::NodeOptions & opt
 
 }
 
-void MultiLidarSimulatorNode::publishSceneMarkersTimer()
-{
+void MultiLidarSimulatorNode::publishSceneMarkersTimer() {
   visualization_->publishSceneMarkers(objects_);
 }
 
 
-void MultiLidarSimulatorNode::onTimer()
-{
+void MultiLidarSimulatorNode::onTimer() {
   // для каждого лидара
   for (size_t i = 0; i < lidars_.size(); ++i) {
     auto [cloud, noisy] = lidars_[i]->scan(objects_);  // прокидываем ВСЕ объекты сцены

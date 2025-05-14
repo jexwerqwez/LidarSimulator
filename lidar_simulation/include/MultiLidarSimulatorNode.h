@@ -4,6 +4,7 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <yaml-cpp/yaml.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <geometry_msgs/msg/twist.hpp>
 
 #include "Lidar.h"
 #include "Objects/Plane.h"
@@ -48,6 +49,8 @@ public:
   // визуализация
   std::unique_ptr<Visualization> visualization_;
 
+  // управление
+  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr lidar_control_sub_;
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::TimerBase::SharedPtr marker_timer_;
 };

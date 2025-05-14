@@ -69,7 +69,7 @@ void TrunkDetector::pointCloudCallback(const sensor_msgs::msg::PointCloud2::Shar
     tp.x = sum_x / points.size();
     tp.y = sum_y / points.size();
     tp.r = std::hypot(grid_size_, grid_size_);
-    tp.c = 3;  // можно потом определять по высоте
+    tp.h = z_max - z_min;
     out.trunks.push_back(tp);
   }
   RCLCPP_INFO(this->get_logger(), "Trunks found: %lu out of %lu points",
