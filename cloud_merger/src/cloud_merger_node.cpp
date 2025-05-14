@@ -72,7 +72,7 @@ PointCloudPtr CloudMergerNode::removeGroundPlane(const PointCloudPtr &cloud)
   seg.setOptimizeCoefficients(true);
   seg.setModelType(pcl::SACMODEL_PLANE);
   seg.setMethodType(pcl::SAC_RANSAC);
-  seg.setDistanceThreshold(0.05);  // допуск в метрах до плоскости
+  seg.setDistanceThreshold(0.07);  // допуск в метрах до плоскости
 
   pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients());
   pcl::PointIndices::Ptr inliers(new pcl::PointIndices());

@@ -2,4 +2,4 @@
 float64 x
 float64 y
 float64 r
-int8 c
+float64 h

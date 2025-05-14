@@ -30,6 +30,7 @@ public:
     pcl::PointCloud<pcl::PointXYZI>::Ptr
   >
   scan(const std::vector<std::shared_ptr<Object>> & scene_objects);
+  void publishCloud(const pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud);
 
   /// Публикует только TF-позу лидара
   void publishTransform();

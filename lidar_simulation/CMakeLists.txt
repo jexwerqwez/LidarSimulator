@@ -14,6 +14,9 @@ find_package(tf2 REQUIRED)
 find_package(std_srvs REQUIRED)
 # YAML-парсер
 find_package(yaml-cpp REQUIRED)
+find_package(GTest REQUIRED)
+find_package(ament_cmake_gtest REQUIRED)
+
 # Добавление директорий заголовочных файлов
 include_directories(
   ${PROJECT_SOURCE_DIR}/include
@@ -81,33 +84,37 @@ ament_target_dependencies(multi_lidar_simulator
   yaml-cpp
 )
 
-# find_package(GTest REQUIRED)
+# ------------------------------------------------------------
+# 4. Функциональные тесты (GTest)
+# ------------------------------------------------------------
+ament_add_gtest(tests
+  test/TestMain.cpp
+  # test/FunctionalTest.cpp
+  # test/IntegrationTest.cpp
+  test/StressTest.cpp
+)
 
-# add_executable(tests
-#   test/TestMain.cpp
-#   test/FunctionalTest.cpp
-#   )
+target_link_libraries(tests
+  lidar_simulation_library
+)
 
-# add_executable(tests
-#   test/TestMain.cpp
-#   test/IntegrationTest.cpp
-#   )
-
-# add_executable(tests
-#   test/TestMain.cpp
-#   test/StressTest.cpp
-#   )
-
-# target_link_libraries(tests lidar_simulation_library GTest::GTest GTest::Main)
+ament_target_dependencies(tests
+  rclcpp
+  sensor_msgs
+  geometry_msgs
+  pcl_conversions
+  pcl_ros
+)
 
 # ------------------------------------------------------------
-# 4) Установка
+# 5. Установка
 # ------------------------------------------------------------
 install(
   TARGETS
     lidar_simulation_library
     multi_lidar_simulator
     lidar_control_node
+    tests
   DESTINATION lib/${PROJECT_NAME}
 )
 

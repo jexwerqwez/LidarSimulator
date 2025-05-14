@@ -111,6 +111,13 @@ auto Lidar::scan(const std::vector<std::shared_ptr<Object>> &scene_objects)
   return {cloud, noisy};
 }
 
+void Lidar::publishCloud(const pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud) {
+  sensor_msgs::msg::PointCloud2 msg;
+  pcl::toROSMsg(*cloud, msg);
+  msg.header.stamp = node_->now();
+  msg.header.frame_id = frame_id_;
+  pub_->publish(msg);
+}
 
 void Lidar::publishTransform() {
   geometry_msgs::msg::TransformStamped t;

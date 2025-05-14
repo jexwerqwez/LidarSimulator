@@ -99,7 +99,8 @@ void MultiLidarSimulatorNode::publishSceneMarkersTimer() {
 }
 
 
-void MultiLidarSimulatorNode::onTimer() {
+void MultiLidarSimulatorNode::onTimer()
+{
   // для каждого лидара
   for (size_t i = 0; i < lidars_.size(); ++i) {
     auto [cloud, noisy] = lidars_[i]->scan(objects_);  // прокидываем ВСЕ объекты сцены
