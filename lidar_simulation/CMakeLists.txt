@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 project(lidar_simulation)
 
-# ROS 2 и другие зависимости
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
@@ -12,21 +11,15 @@ find_package(geometry_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(std_srvs REQUIRED)
-# YAML-парсер
 find_package(yaml-cpp REQUIRED)
 find_package(GTest REQUIRED)
 find_package(ament_cmake_gtest REQUIRED)
 
-# Добавление директорий заголовочных файлов
 include_directories(
   ${PROJECT_SOURCE_DIR}/include
   ${YAML_CPP_INCLUDE_DIRS}
 )
 
-# ------------------------------------------------------------
-# 1) Сборка общей библиотеки lidar_simulation_library:
-#    в ней лежат Plane, Sphere, Cylinder, Lidar, Visualization
-# ------------------------------------------------------------
 add_library(lidar_simulation_library
   src/Objects/Plane.cpp
   src/Objects/Sphere.cpp
@@ -35,7 +28,6 @@ add_library(lidar_simulation_library
   src/Visualization.cpp
 )
 
-# Линковка зависимостей для библиотеки
 ament_target_dependencies(lidar_simulation_library
   rclcpp
   sensor_msgs
@@ -48,9 +40,6 @@ ament_target_dependencies(lidar_simulation_library
   yaml-cpp
 )
 
-# ------------------------------------------------------------
-# 2) Собираем узел зел управления движением лидара
-# ------------------------------------------------------------
 add_executable(lidar_control_node
   src/LidarKeyboardController.cpp
 )
@@ -60,9 +49,6 @@ ament_target_dependencies(lidar_control_node
   geometry_msgs
 )
 
-# ------------------------------------------------------------
-# 3) Собираем исполняемый узел multi_lidar_simulator
-# ------------------------------------------------------------
 add_executable(multi_lidar_simulator
   src/multi_lidar_node.cpp
   src/MultiLidarSimulatorNode.cpp
@@ -84,9 +70,6 @@ ament_target_dependencies(multi_lidar_simulator
   yaml-cpp
 )
 
-# ------------------------------------------------------------
-# 4. Функциональные тесты (GTest)
-# ------------------------------------------------------------
 ament_add_gtest(tests
   test/TestMain.cpp
   # test/FunctionalTest.cpp
@@ -106,9 +89,6 @@ ament_target_dependencies(tests
   pcl_ros
 )
 
-# ------------------------------------------------------------
-# 5. Установка
-# ------------------------------------------------------------
 install(
   TARGETS
     lidar_simulation_library

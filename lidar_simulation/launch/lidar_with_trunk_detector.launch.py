@@ -83,7 +83,7 @@ def generate_launch_description():
             executable='teleop_twist_keyboard',
             name='teleop_twist_keyboard',
             output='screen',
-            prefix='xterm -e',  # чтобы запустить в новом окне терминала
+            prefix='xterm -e',  # запускаем в новом окне терминала
         )
 
     ])

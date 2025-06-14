@@ -1,25 +1,23 @@
 #pragma once
 
+#include <pcl_conversions/pcl_conversions.h>
+#include <yaml-cpp/yaml.h>
+
+#include <geometry_msgs/msg/twist.hpp>
+#include <memory>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <yaml-cpp/yaml.h>
-#include <pcl_conversions/pcl_conversions.h>
-#include <geometry_msgs/msg/twist.hpp>
-
-#include "Lidar.h"
-#include "Objects/Plane.h"
-#include "Objects/Sphere.h"
-#include "Objects/Cylinder.h"
-#include "Visualization.h"
-
-#include <memory>
 #include <vector>
 
-namespace multi_lidar_sim
-{
+#include "Lidar.h"
+#include "Objects/Cylinder.h"
+#include "Objects/Plane.h"
+#include "Objects/Sphere.h"
+#include "Visualization.h"
 
-struct LidarConfig
-{
+namespace multi_lidar_sim {
+
+struct LidarConfig {
   std::string name;
   std::string topic;
   Position3D pose;
@@ -28,13 +26,13 @@ struct LidarConfig
   double alpha_begin, alpha_end, laser_range, horizontal_step;
 };
 
-class MultiLidarSimulatorNode : public rclcpp::Node
-{
-public:
-  explicit MultiLidarSimulatorNode(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
+class MultiLidarSimulatorNode : public rclcpp::Node {
+ public:
+  explicit MultiLidarSimulatorNode(
+      const rclcpp::NodeOptions& options = rclcpp::NodeOptions());
 
-  private:
-  void loadConfig(const std::string & yaml_path);
+ private:
+  void loadConfig(const std::string& yaml_path);
   void onTimer();
   void publishSceneMarkersTimer();
 
@@ -42,9 +40,10 @@ public:
   std::vector<LidarConfig> configs_;
   std::vector<std::shared_ptr<Object>> objects_;
 
-  // сами лидары и издатели их облаков
+  // сами лидары и паблишеры их облаков
   std::vector<std::unique_ptr<Lidar>> lidars_;
-  std::vector<rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr> pubs_;
+  std::vector<rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr>
+      pubs_;
 
   // визуализация
   std::unique_ptr<Visualization> visualization_;

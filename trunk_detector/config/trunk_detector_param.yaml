@@ -3,7 +3,7 @@ trunk_detector_node:
     input_topic: /merged_cloud
     output_topic: /detector_output
 
-    grid_size: 0.4               # Размер ячейки 2D-сетки, м
-    height_threshold: 0.03        # Порог высоты объекта, м (если z_max - z_min > порог, то это препятствие)
-    min_intensity: 0.00          # Отбрасывать шумовые точки по интенсивности
-    max_distance: 40.0           # Радиус обработки, м
+    grid_size: 0.4               # размер ячейки 2D-сетки, м
+    height_threshold: 0.05       # порог высоты объекта, м
+    min_intensity: 0.00          # шумовые точки по интенсивности
+    max_distance: 40.0           # радиус обработки, м

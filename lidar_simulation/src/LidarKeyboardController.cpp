@@ -1,19 +1,21 @@
 
-#include <rclcpp/rclcpp.hpp>
-#include <geometry_msgs/msg/twist.hpp>
+#include <stdio.h>
 #include <termios.h>
 #include <unistd.h>
-#include <stdio.h>
+
+#include <geometry_msgs/msg/twist.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 class KeyboardControlNode : public rclcpp::Node {
-public:
+ public:
   KeyboardControlNode() : Node("lidar_keyboard_controller") {
-    pub_ = this->create_publisher<geometry_msgs::msg::Twist>("/lidar_control", 10);
+    pub_ =
+        this->create_publisher<geometry_msgs::msg::Twist>("/lidar_control", 10);
     RCLCPP_INFO(this->get_logger(), "Use WASD to move the lidar (q to quit)");
     loop();
   }
 
-private:
+ private:
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_;
 
   void loop() {
@@ -21,11 +23,16 @@ private:
       char c = getChar();
       geometry_msgs::msg::Twist msg;
 
-      if (c == 'w') msg.linear.x = 0.2;
-      else if (c == 's') msg.linear.x = -0.2;
-      else if (c == 'a') msg.linear.y = 0.2;
-      else if (c == 'd') msg.linear.y = -0.2;
-      else if (c == 'q') break;
+      if (c == 'w')
+        msg.linear.x = 0.2;
+      else if (c == 's')
+        msg.linear.x = -0.2;
+      else if (c == 'a')
+        msg.linear.y = 0.2;
+      else if (c == 'd')
+        msg.linear.y = -0.2;
+      else if (c == 'q')
+        break;
 
       pub_->publish(msg);
       usleep(100000);

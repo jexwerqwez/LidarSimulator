@@ -29,7 +29,6 @@ add_executable(trunk_detector_node
   src/trunk_detector.cpp
 )
 
-# Подключение зависимостей для целевого файла
 ament_target_dependencies(trunk_detector_node
   rclcpp
   sensor_msgs
@@ -39,12 +38,10 @@ ament_target_dependencies(trunk_detector_node
   pcl_ros
 )
 
-# Линкуем библиотеки PCL
 target_link_libraries(${PROJECT_NAME}_node
   ${PCL_LIBRARIES}
 )
 
-# Узел визуализации
 add_executable(trunk_marker_visualizer_node
   src/trunk_marker_visualizer_node.cpp
 )
@@ -56,15 +53,12 @@ ament_target_dependencies(trunk_marker_visualizer_node
   trunk_detector_msgs
 )
 
-
-# Установка бинарников
 install(TARGETS
   trunk_detector_node
   trunk_marker_visualizer_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
-# Установка ресурсов
 install(DIRECTORY
   launch
   config

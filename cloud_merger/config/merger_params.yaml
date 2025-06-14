@@ -1,10 +1,10 @@
 cloud_merger_node:
   ros__parameters:
-    # список входных топиков любого размера
+    # список входных топиков
     input_topics: ["/lidar/front/points", "/lidar/rear/points"]
     output_topic: "/merged_cloud"
     publish_rate: 2.0          # Гц
-    voxel_leaf_size: 0.2
+    voxel_leaf_size: 0.1
     min_scale: 0.01
     n_octaves: 3
     n_scales_per_octave: 4
